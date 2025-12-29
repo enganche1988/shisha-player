@@ -20,6 +20,33 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+---
+
+## Prisma/Postgres DB Setup
+
+1. `.env.local` に DATABASE_URL を追加してください（Postgres用 / 例: Neonなど）
+   ```
+   DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DATABASE
+   ```
+   ※ サンプルは `.env.example` を参照
+2. マイグレーション
+   ```bash
+   npm run db:migrate
+   # または
+   pnpm db:migrate
+   ```
+   ※ DATABASE_URL 未設定の場合は失敗します
+3. Seed投入
+   ```bash
+   npm run db:seed
+   # または
+   pnpm db:seed
+   ```
+
+- スキーマやシードの調整は `prisma/schema.prisma`, `prisma/seed.ts` を参照してください
+
+---
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

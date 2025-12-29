@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Staff {
+  id             String   @id @default(uuid())
+  slug           String   @unique
+  displayName    String
+  bio            String?
+  baseCity       String?
+  styleTags      String[]
+  instagramHandle String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  shifts         Shift[]
+  posts          PostLink[]
+  endorsementsTo   Endorsement[] @relation("toStaff")
+  endorsementsFrom Endorsement[] @relation("fromStaff")
+}
+
+model Venue {
+  id             String   @id @default(uuid())
+  slug           String   @unique
+  name           String
+  area           String?
+  city           String?
+  address        String?
+  instagramHandle String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  shifts         Shift[]
+}
+
+enum ShiftType {
+  REGULAR
+  GUEST
+  COLLAB
+}
+
+model Shift {
+  id        String   @id @default(uuid())
+  staff     Staff    @relation(fields: [staffId], references: [id])
+  staffId   String
+  venue     Venue    @relation(fields: [venueId], references: [id])
+  venueId   String
+  shiftType ShiftType
+  startAt   DateTime
+  endAt     DateTime?
+  note      String?
+  sourceUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([startAt])
+  @@index([staffId, startAt])
+  @@index([venueId, startAt])
+}
+
+model PostLink {
+  id        String   @id @default(uuid())
+  staff     Staff    @relation(fields: [staffId], references: [id])
+  staffId   String
+  url       String
+  caption   String?
+  postedAt  DateTime?
+  createdAt DateTime @default(now())
+
+  @@unique([staffId, url])
+}
+
+enum EndorsementStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Endorsement {
+  id            String   @id @default(uuid())
+  fromStaff     Staff    @relation("fromStaff", fields: [fromStaffId], references: [id])
+  fromStaffId   String
+  toStaff       Staff    @relation("toStaff", fields: [toStaffId], references: [id])
+  toStaffId     String
+  status        EndorsementStatus @default(PENDING)
+  body          String
+  skillTags     String[]
+  sourceUrl     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([toStaffId, status, createdAt])
+  @@index([fromStaffId, createdAt])
+  /// Check: fromStaffId != toStaffId (App側で要実装)
+}
+
+
+
+
