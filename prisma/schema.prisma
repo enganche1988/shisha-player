@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // url removed: Prisma v7+ uses prisma.config.ts for datasource config
 }
 
 model Person {
@@ -53,7 +53,7 @@ model Shift {
   personId  String
   shop      Shop     @relation(fields: [shopId], references: [id])
   shopId    String
-  date      DateTime // 日付のみ（00:00:00始まり推奨）
+  date      DateTime
   startTime DateTime?
   endTime   DateTime?
   note      String?
