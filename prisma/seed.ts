@@ -1,92 +1,87 @@
-import { PrismaClient, ShiftType, EndorsementStatus } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+
 const prisma = new PrismaClient();
 
+function startOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+}
+function addDays(date: Date, n: number) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + n);
+  return d;
+}
+function makeStart(date: Date, h: number, m: number = 0) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), h, m, 0, 0);
+}
+
 async function main() {
-  // 1. Staffs
-  const staffs = await prisma.staff.createMany({
+  // 削除: 子→親の順
+  await prisma.instagramPost.deleteMany();
+  await prisma.favorite.deleteMany();
+  await prisma.recommendation.deleteMany();
+  await prisma.shift.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.person.deleteMany();
+  await prisma.shop.deleteMany();
+
+  // 1. Person 6人
+  const peopleRaw = [
+    { slug: "alice", displayName: "Alice", isStaff: true, canComment: true },
+    { slug: "ben", displayName: "Ben", isStaff: true, canComment: true },
+    { slug: "chloe", displayName: "Chloe", isStaff: true, canComment: false },
+    { slug: "daisuke", displayName: "Daisuke", isStaff: true, canComment: false },
+    { slug: "emi", displayName: "Emi", isStaff: false, canComment: true },
+    { slug: "fuji", displayName: "Fuji", isStaff: false, canComment: true }
+  ];
+  const people = await Promise.all(peopleRaw.map(p => prisma.person.create({ data: p })));
+
+  // 2. Shop 3つ
+  const shopObjs = await Promise.all([
+    prisma.shop.create({ data: { slug: "shibuya-chic", displayName: "渋谷CHIC", area: "渋谷" } }),
+    prisma.shop.create({ data: { slug: "ikebukuro-mellow", displayName: "池袋Mellow", area: "池袋" } }),
+    prisma.shop.create({ data: { slug: "kichijoji-rest", displayName: "吉祥寺Rest", area: "吉祥寺" } }),
+  ]);
+
+  // 3. Shift 本日2〜3＋今週少し
+  const today = startOfDay(new Date());
+  const week = [0,1,2,3,4,5,6].map(i => addDays(today, i));
+  await Promise.all([
+    prisma.shift.create({ data: { personId: people[0].id, shopId: shopObjs[0].id, date: week[0], startTime: makeStart(week[0], 19) } }),
+    prisma.shift.create({ data: { personId: people[1].id, shopId: shopObjs[1].id, date: week[0], startTime: makeStart(week[0], 20) } }),
+    prisma.shift.create({ data: { personId: people[2].id, shopId: shopObjs[2].id, date: week[2], startTime: makeStart(week[2], 21) } }),
+    prisma.shift.create({ data: { personId: people[3].id, shopId: shopObjs[2].id, date: week[3], startTime: makeStart(week[3], 20) } }),
+  ]);
+
+  // 4. Recommendation 10件（Benが多く被推薦される構造を作る）
+  const p = people;
+  const recs = [
+    { fromPersonId: p[1].id, toPersonId: p[0].id, isApproved: true, body: "Creativity!" },
+    { fromPersonId: p[2].id, toPersonId: p[0].id, isApproved: true, body: "Skillful" },
+    { fromPersonId: p[0].id, toPersonId: p[1].id, isApproved: true, body: "Knowledgeable!" },
+    { fromPersonId: p[2].id, toPersonId: p[1].id, isApproved: true, body: "Great collab" },
+    { fromPersonId: p[3].id, toPersonId: p[1].id, isApproved: true, body: "Solid style" },
+    { fromPersonId: p[4].id, toPersonId: p[1].id, isApproved: true, body: "Trustworthy" },
+    { fromPersonId: p[1].id, toPersonId: p[2].id, isApproved: true, body: "Cool" },
+    { fromPersonId: p[5].id, toPersonId: p[2].id, isApproved: true, body: "Fresh" },
+    { fromPersonId: p[0].id, toPersonId: p[3].id, isApproved: true, body: "Gentle" },
+    { fromPersonId: p[5].id, toPersonId: p[4].id, isApproved: true, body: "Honest" }
+  ];
+  for (const rec of recs) await prisma.recommendation.create({ data: rec });
+
+  // 5. User & Favorite
+  const user = await prisma.user.create({ data: { email: "sample@example.com" } });
+  await prisma.favorite.createMany({
     data: [
-      { slug: 'akira', displayName: 'Akira', bio: 'おしゃれなシーシャバーテンダー', baseCity: '東京', styleTags: ['クラシック','フルー'] , instagramHandle: 'akira_shisha' },
-      { slug: 'miku', displayName: 'Miku', bio: 'molasses master', baseCity: '大阪', styleTags: ['ミクスチャー'], instagramHandle: 'miku_hookah' },
-      { slug: 'taichi', displayName: 'Taichi', bio: 'ゲスト系', baseCity: '京都', styleTags: ['ゲスト'] },
-      { slug: 'yuzu', displayName: 'Yuzu', baseCity: '名古屋', styleTags: ['ミント'] },
-      { slug: 'haru', displayName: 'Haru', baseCity: '福岡', styleTags: ['シトラス', 'クラシック'], instagramHandle: 'haru_pipe' },
-      { slug: 'emily', displayName: 'Emily', baseCity: '札幌', styleTags: ['スパイス'] },
+      { userId: user.id, personId: p[0].id },
+      { userId: user.id, personId: p[1].id }
     ]
   });
-
-  // 2. Venues
-  const venues = await prisma.venue.createMany({
-    data: [
-      { slug: 'cloud-nine', name: 'Cloud Nine', area: '渋谷', city: '東京', instagramHandle: 'cloudnine_shibuya' },
-      { slug: 'genie', name: 'Genie', area: '心斎橋', city: '大阪', instagramHandle: 'genie_osaka' },
-      { slug: 'nectar', name: 'Nectar', area: '中区', city: '名古屋', instagramHandle: 'nectar_nagoya' },
-    ]
-  });
-
-  // 3. Get inserted IDs
-  const staffObjs = await prisma.staff.findMany();
-  const venueObjs = await prisma.venue.findMany();
-
-  // 4. Shifts (10件, ランダム日付)
-  function randomDate(daysRange: number) {
-    const date = new Date();
-    date.setDate(date.getDate() + Math.floor(Math.random() * daysRange));
-    return date;
-  }
-
-  for (let i = 0; i < 10; i++) {
-    await prisma.shift.create({
-      data: {
-        staffId: staffObjs[Math.floor(Math.random() * staffObjs.length)].id,
-        venueId: venueObjs[Math.floor(Math.random() * venueObjs.length)].id,
-        shiftType: [ShiftType.REGULAR, ShiftType.GUEST, ShiftType.COLLAB][Math.floor(Math.random()*3)],
-        startAt: randomDate(7),
-        note: '例・出勤情報',
-        sourceUrl: 'https://instagram.com/post/'+Math.random(),
-      }
-    });
-  }
-
-  // 5. PostLinks (12件, ダミーURL)
-  for (let i = 0; i < 12; i++) {
-    await prisma.postLink.create({
-      data: {
-        staffId: staffObjs[Math.floor(Math.random() * staffObjs.length)].id,
-        url: `https://instagram.com/dummy/${i}`,
-        caption: `ダミー${i} キャプション`,
-        postedAt: randomDate(30),
-      }
-    });
-  }
-
-  // 6. Endorsements (10件, APPROVED/PENDING)
-  for (let i = 0; i < 10; i++) {
-    const fromStaff = staffObjs[Math.floor(Math.random() * staffObjs.length)];
-    let toStaff = staffObjs[Math.floor(Math.random() * staffObjs.length)];
-    while (toStaff.id === fromStaff.id) {
-      toStaff = staffObjs[Math.floor(Math.random() * staffObjs.length)];
-    }
-    await prisma.endorsement.create({
-      data: {
-        fromStaffId: fromStaff.id,
-        toStaffId: toStaff.id,
-        status: [EndorsementStatus.APPROVED, EndorsementStatus.PENDING][Math.floor(Math.random()*2)],
-        body: '素晴らしいシーシャスキルを持ったスタッフです。',
-        skillTags: ['親切', '上手い'],
-        sourceUrl: 'https://instagram.com/recommend/'+Math.random(),
-      }
-    });
-  }
 }
 
 main().catch(e => {
   // eslint-disable-next-line no-console
   console.error(e);
   process.exit(1);
-}).finally(async () => {
-  await prisma.$disconnect();
-});
-
-
-
-
+}).finally(() => prisma.$disconnect());

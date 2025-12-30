@@ -7,96 +7,96 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Staff {
-  id             String   @id @default(uuid())
-  slug           String   @unique
-  displayName    String
-  bio            String?
-  baseCity       String?
-  styleTags      String[]
-  instagramHandle String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  shifts         Shift[]
-  posts          PostLink[]
-  endorsementsTo   Endorsement[] @relation("toStaff")
-  endorsementsFrom Endorsement[] @relation("fromStaff")
+model Person {
+  id           String   @id @default(uuid())
+  slug         String   @unique
+  displayName  String
+  avatarUrl    String?
+  bio          String?
+  isStaff      Boolean  @default(false)
+  canComment   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  shifts              Shift[]
+  recommendationsFrom Recommendation[] @relation("fromPerson")
+  recommendationsTo   Recommendation[] @relation("toPerson")
+  instagramPosts      InstagramPost[]
+  favorites           Favorite[]      @relation("favoritePerson")
+  user                User?           @relation(fields: [userId], references: [id])
+  userId              String?         @unique
 }
 
-model Venue {
-  id             String   @id @default(uuid())
-  slug           String   @unique
-  name           String
-  area           String?
-  city           String?
-  address        String?
-  instagramHandle String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  shifts         Shift[]
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  createdAt DateTime  @default(now())
+  favorites Favorite[]
+  person    Person?
 }
 
-enum ShiftType {
-  REGULAR
-  GUEST
-  COLLAB
+model Shop {
+  id         String   @id @default(uuid())
+  slug       String   @unique
+  displayName String
+  area       String?
+  address    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  shifts     Shift[]
 }
 
 model Shift {
   id        String   @id @default(uuid())
-  staff     Staff    @relation(fields: [staffId], references: [id])
-  staffId   String
-  venue     Venue    @relation(fields: [venueId], references: [id])
-  venueId   String
-  shiftType ShiftType
-  startAt   DateTime
-  endAt     DateTime?
+  person    Person   @relation(fields: [personId], references: [id])
+  personId  String
+  shop      Shop     @relation(fields: [shopId], references: [id])
+  shopId    String
+  date      DateTime // 日付のみ（00:00:00始まり推奨）
+  startTime DateTime?
+  endTime   DateTime?
   note      String?
-  sourceUrl String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([startAt])
-  @@index([staffId, startAt])
-  @@index([venueId, startAt])
+  @@unique([personId, shopId, date])
+  @@index([date])
+  @@index([personId, date])
 }
 
-model PostLink {
-  id        String   @id @default(uuid())
-  staff     Staff    @relation(fields: [staffId], references: [id])
-  staffId   String
-  url       String
-  caption   String?
-  postedAt  DateTime?
-  createdAt DateTime @default(now())
+model Recommendation {
+  id          String   @id @default(uuid())
+  fromPerson  Person   @relation("fromPerson", fields: [fromPersonId], references: [id])
+  fromPersonId String
+  toPerson    Person   @relation("toPerson", fields: [toPersonId], references: [id])
+  toPersonId   String
+  isApproved   Boolean @default(true)
+  body         String
+  createdAt    DateTime @default(now())
 
-  @@unique([staffId, url])
+  @@unique([fromPersonId, toPersonId])
+  @@index([toPersonId])
+  @@index([fromPersonId])
 }
 
-enum EndorsementStatus {
-  PENDING
-  APPROVED
-  REJECTED
+model Favorite {
+  id          String   @id @default(uuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  person      Person   @relation("favoritePerson", fields: [personId], references: [id])
+  personId    String
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, personId])
 }
 
-model Endorsement {
-  id            String   @id @default(uuid())
-  fromStaff     Staff    @relation("fromStaff", fields: [fromStaffId], references: [id])
-  fromStaffId   String
-  toStaff       Staff    @relation("toStaff", fields: [toStaffId], references: [id])
-  toStaffId     String
-  status        EndorsementStatus @default(PENDING)
-  body          String
-  skillTags     String[]
-  sourceUrl     String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@index([toStaffId, status, createdAt])
-  @@index([fromStaffId, createdAt])
-  /// Check: fromStaffId != toStaffId (App側で要実装)
+model InstagramPost {
+  id          String   @id @default(uuid())
+  person      Person   @relation(fields: [personId], references: [id])
+  personId    String
+  url         String
+  imageUrl    String?
+  postedAt    DateTime?
+  createdAt   DateTime @default(now())
 }
-
-
-
-
