@@ -38,7 +38,6 @@ export function MessageSheet({ displayName, todayDate, todayShop, todayTime, ins
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const timerRef = useRef<number | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const initialText = useMemo(
     () => buildTemplate(displayName, todayDate, todayShop, todayTime),
@@ -74,13 +73,7 @@ export function MessageSheet({ displayName, todayDate, todayShop, todayTime, ins
     try {
       await navigator.clipboard.writeText(text);
     } catch {
-      const el = textareaRef.current;
-      if (el) {
-        // programmatic selection (user drag not required)
-        el.focus();
-        el.select();
-        document.execCommand("copy");
-      }
+      // ignore; navigator.clipboard unavailable
     }
     setCopied(true);
     if (timerRef.current) window.clearTimeout(timerRef.current);
@@ -136,16 +129,15 @@ export function MessageSheet({ displayName, todayDate, todayShop, todayTime, ins
                 <div className="mt-2 text-xs text-zinc-500">※ 押すと、下の文章が自動でコピーされます</div>
               </div>
 
-              <div className="mt-5 text-sm text-zinc-400">Instagramで送られるメッセージ</div>
+              <div className="mt-5 text-xs text-zinc-400">Instagramで送られるメッセージ</div>
 
               <div className="mt-3">
-                <textarea
-                  ref={textareaRef}
-                  readOnly
-                  value={text}
-                  className="w-full resize-none rounded-md bg-zinc-950/80 p-3 text-sm leading-6 text-zinc-200 outline-none"
-                  rows={9}
-                />
+                <div
+                  className="w-full rounded-md border border-zinc-800/60 bg-zinc-900/60 p-4 text-sm leading-7 text-zinc-200"
+                  style={{ whiteSpace: "pre-wrap" }}
+                >
+                  {text}
+                </div>
               </div>
 
               <div className="mt-3 text-xs text-zinc-500 space-y-1">
