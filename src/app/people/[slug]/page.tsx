@@ -6,12 +6,12 @@ import { getPrisma } from "@/lib/prisma";
 type TodayInfo = { shop?: string; start?: string; end?: string };
 type FallbackShift = { id: string; shop: { area?: string; displayName: string }; date: Date; start?: string; end?: string };
 
-function formatTodayLine(today: TodayInfo | undefined) {
-  const shop = today?.shop;
+function getShopAndTime(today: TodayInfo | undefined): { shop: string; time: string } {
+  const shop = today?.shop ?? "—";
   const start = today?.start;
   const end = today?.end;
-  if (!shop || !start || !end) return "Today: —";
-  return `Today: ${shop} · ${start}-${end}`;
+  const time = start && end ? `${start}-${end}` : "—";
+  return { shop, time };
 }
 
 function isSameDay(a: Date, b: Date) {
@@ -122,7 +122,10 @@ export default async function PeopleDetail({ params }: { params: { slug?: string
     <main className="min-h-screen bg-black text-zinc-100 py-10 px-4 max-w-2xl mx-auto">
       {/* Today */}
       <section className="mb-10">
-        <div className="text-sm text-zinc-300">{formatTodayLine(today)}</div>
+        <div className="flex items-baseline justify-between gap-4 text-sm text-zinc-300">
+          <span className="min-w-0 truncate">{getShopAndTime(today).shop}</span>
+          <span className="whitespace-nowrap font-mono tabular-nums">{getShopAndTime(today).time}</span>
+        </div>
       </section>
 
       {/* This Week (optional) */}
