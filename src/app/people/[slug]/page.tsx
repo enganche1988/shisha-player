@@ -150,10 +150,12 @@ async function getPersonData(slug: string | undefined) {
 export default async function PeopleDetail({ params }: { params: { slug?: string } }) {
   const data = await getPersonData(params?.slug);
   const { person, today, abouts, bys } = data as any;
-  const imageSrc: string | null =
-    typeof person?.avatarUrl === "string" && person.avatarUrl.startsWith("/")
-      ? person.avatarUrl
-      : (data as any).imageSrc ?? null;
+  const slug = params?.slug;
+  const derived = typeof slug === "string" && slug.length > 0 ? `/people/${slug}.svg` : null;
+  const imageSrc: string =
+    (typeof (person as any)?.imageSrc === "string" && (person as any).imageSrc.startsWith("/"))
+      ? (person as any).imageSrc
+      : (derived ?? "/people/_placeholder.svg");
   const todayShop = today?.shop as string | undefined;
   const todayUrl = todayShop ? mapsSearchUrl(todayShop) : null;
 
@@ -161,20 +163,18 @@ export default async function PeopleDetail({ params }: { params: { slug?: string
     <>
       <main className="min-h-screen bg-black text-zinc-100 py-10 px-4 pb-28 max-w-2xl mx-auto">
         {/* Image (quiet exhibit) */}
-        {imageSrc ? (
-          <div className="mb-10">
-            <div className="relative w-full aspect-[16/9] overflow-hidden rounded-md bg-zinc-950">
-              <Image
-                src={imageSrc}
-                alt=""
-                fill
-                sizes="(max-width: 768px) 100vw, 672px"
-                className="object-cover opacity-90"
-                priority={false}
-              />
-            </div>
+        <div className="mb-10">
+          <div className="relative w-full aspect-[16/9] overflow-hidden rounded-md bg-zinc-950">
+            <Image
+              src={imageSrc}
+              alt=""
+              fill
+              sizes="(max-width: 768px) 100vw, 672px"
+              className="object-cover opacity-90"
+              priority={false}
+            />
           </div>
-        ) : null}
+        </div>
 
         {/* Name */}
         <header className="mb-10">
