@@ -21,6 +21,15 @@ function getShopAndTime(p: Pick): { shop: string; time: string } {
   return { shop, time };
 }
 
+function tierFor(slug: string): "Ⅰ" | "Ⅱ" | "Ⅲ" | null {
+  const map: Record<string, "Ⅰ" | "Ⅱ" | "Ⅲ"> = {
+    emi: "Ⅰ",
+    fuji: "Ⅱ",
+    chloe: "Ⅲ",
+  };
+  return map[slug] ?? null;
+}
+
 const fallbackPeople: Pick[] = [
   {
     slug: "alice",
@@ -36,6 +45,16 @@ const fallbackPeople: Pick[] = [
     slug: "chloe",
     displayName: "Chloe",
     today: { shop: "吉祥寺Rest", start: "21:00", end: "24:00" },
+  },
+  {
+    slug: "emi",
+    displayName: "Emi",
+    today: { shop: "渋谷CHIC", start: "18:30", end: "22:30" },
+  },
+  {
+    slug: "daisuke",
+    displayName: "Daisuke",
+    today: { shop: "池袋Mellow", start: "19:30", end: "23:30" },
   },
 ];
 
@@ -74,23 +93,28 @@ export default async function HomePage() {
     <main className="min-h-screen bg-black flex flex-col items-center justify-center text-white">
       <div className="w-full max-w-xl px-4 py-20">
         <h1 className="text-2xl font-bold mb-4">Today’s Picks</h1>
-        <div className="space-y-5">
-          {picks.map(p => (
-            <div
-              key={p.slug}
-              className="rounded-xl bg-zinc-900 px-6 py-5 flex items-center gap-5"
-            >
-              <div className="flex-1">
-                <a href={`/people/${p.slug}`} className="text-lg font-semibold hover:underline text-zinc-100">
-                  {p.displayName}
-                </a>
-                <div className="mt-1 flex items-baseline justify-between gap-4 text-sm text-zinc-400">
-                  <span className="min-w-0 truncate">{getShopAndTime(p).shop}</span>
-                  <span className="whitespace-nowrap font-mono tabular-nums">{getShopAndTime(p).time}</span>
+        <div className="divide-y divide-zinc-800/50">
+          {picks.slice(0, 5).map(p => {
+            const tier = tierFor(p.slug);
+            const meta = getShopAndTime(p);
+            return (
+              <div key={p.slug} className="py-4">
+                <div className="flex items-baseline justify-between gap-6">
+                  <a
+                    href={`/people/${p.slug}`}
+                    className="min-w-0 truncate text-lg font-semibold text-zinc-100 hover:underline underline-offset-4 decoration-zinc-700/70"
+                  >
+                    {p.displayName}
+                    {tier ? <span className="ml-2 text-sm font-normal text-zinc-500">{tier}</span> : null}
+                  </a>
+                  <div className="flex min-w-0 items-baseline gap-3 text-sm text-zinc-400">
+                    <span className="min-w-0 truncate">{meta.shop}</span>
+                    <span className="whitespace-nowrap font-mono tabular-nums">{meta.time}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </main>
