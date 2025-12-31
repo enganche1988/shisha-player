@@ -49,8 +49,9 @@ const fallbackPeople: Array<{
   name: string;
   imageSrc?: string;
   today?: TodayInfo;
+  instagramUrl?: string;
 }> = [
-  { slug: "alice", name: "Alice", imageSrc: "/people/alice.svg", today: { shop: "渋谷CHIC", start: "19:00", end: "23:00" } },
+  { slug: "alice", name: "Alice", imageSrc: "/people/alice.svg", today: { shop: "渋谷CHIC", start: "19:00", end: "23:00" }, instagramUrl: "https://instagram.com/" },
   { slug: "ben", name: "Ben", imageSrc: "/people/ben.svg", today: { shop: "池袋Mellow", start: "20:00", end: "24:00" } },
   { slug: "chloe", name: "Chloe", today: { shop: "吉祥寺Rest", start: "21:00", end: "24:00" } },
   { slug: "emi", name: "Emi", today: { shop: "渋谷CHIC", start: "18:30", end: "22:30" } },
@@ -67,6 +68,7 @@ function fallbackDataFor(slug: string | undefined) {
     (simpleNameFromSlug(s) ? simpleNameFromSlug(s) : "Anonymous");
   const imageSrc = fromList?.imageSrc ?? null;
   const today: TodayInfo = fromList?.today ?? { shop: "渋谷CHIC", start: "19:00", end: "23:00" };
+  const instagramUrl = fromList?.instagramUrl ?? null;
   const abouts: RecommendationLite[] = [
     {
       id: "r1",
@@ -99,6 +101,7 @@ function fallbackDataFor(slug: string | undefined) {
       isStaff: true,
       canComment: true,
       imageSrc,
+      instagramUrl,
     },
     today,
     abouts,
@@ -190,6 +193,10 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
   const displayName =
     (typeof person?.name === "string" && person.name.trim().length > 0) ? person.name :
     (simpleNameFromSlug(slug) ? simpleNameFromSlug(slug) : "Anonymous");
+  const instagramUrl =
+    typeof (person as any)?.instagramUrl === "string" && (person as any).instagramUrl.startsWith("http")
+      ? (person as any).instagramUrl
+      : null;
   const todayShop = today?.shop as string | undefined;
   const todayUrl = todayShop ? mapsSearchUrl(todayShop) : null;
 
@@ -306,6 +313,20 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
           </ul>
           </section>
         )}
+
+      {/* Instagram (single, quiet) */}
+      {instagramUrl ? (
+        <section className="mt-14">
+          <a
+            href={instagramUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-zinc-500 hover:underline underline-offset-4 decoration-zinc-700/70"
+          >
+            Instagram
+          </a>
+        </section>
+      ) : null}
       </main>
       <StickyTodayBar today={today} />
     </>
