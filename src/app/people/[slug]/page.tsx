@@ -283,18 +283,24 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
         {person.canComment && bys.length > 0 && (
           <section className="mt-16">
             <h2 className="text-sm font-semibold text-zinc-400 mb-4">この人が選ぶ人</h2>
-            <ul className="space-y-3">
-              {bys.map((rec: any) => (
-                <li key={rec.id}>
-                  <a
-                    href={`/people/${rec.toPerson.slug}`}
-                    className="text-sm text-zinc-400 hover:text-zinc-200 hover:underline"
-                  >
-                    {rec.toPerson.displayName}
-                  </a>
-                </li>
-              ))}
-            </ul>
+          <ul className="space-y-3">
+            {[...bys]
+              .sort((a: any, b: any) => String(a?.toPerson?.slug ?? "").localeCompare(String(b?.toPerson?.slug ?? "")))
+              .map((rec: any) => {
+                const tier = tierFor(rec?.toPerson?.slug);
+                return (
+                  <li key={rec.id}>
+                    <a
+                      href={`/people/${rec.toPerson.slug}`}
+                      className="text-sm text-zinc-400 hover:underline underline-offset-4 decoration-zinc-700/70 focus-visible:outline-none focus-visible:underline focus-visible:underline-offset-4"
+                    >
+                      {rec.toPerson.displayName}
+                      {tier ? <span className="ml-2 text-xs text-zinc-500">{tier}</span> : null}
+                    </a>
+                  </li>
+                );
+              })}
+          </ul>
           </section>
         )}
       </main>
