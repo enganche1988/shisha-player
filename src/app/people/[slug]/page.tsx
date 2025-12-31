@@ -3,6 +3,7 @@ export const revalidate = 0;
 
 import { getPrisma } from "@/lib/prisma";
 import Image from "next/image";
+import { MessageSheet } from "./message-sheet";
 
 type TodayInfo = { shop?: string; start?: string; end?: string };
 type PersonLite = { slug: string; displayName: string };
@@ -199,6 +200,7 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
       : null;
   const todayShop = today?.shop as string | undefined;
   const todayUrl = todayShop ? mapsSearchUrl(todayShop) : null;
+  const todayMeta = getShopAndTime(today);
 
   return (
     <>
@@ -314,19 +316,15 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
           </section>
         )}
 
-      {/* Instagram (single, quiet) */}
-      {instagramUrl ? (
-        <section className="mt-14">
-          <a
-            href={instagramUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-zinc-500 hover:underline underline-offset-4 decoration-zinc-700/70"
-          >
-            Instagram
-          </a>
-        </section>
-      ) : null}
+      {/* DM */}
+      <section className="mt-14">
+        <MessageSheet
+          displayName={displayName}
+          todayShop={todayMeta.shop === "—" ? null : todayMeta.shop}
+          todayTime={todayMeta.time === "—" ? null : todayMeta.time}
+          instagramUrl={instagramUrl}
+        />
+      </section>
       </main>
       <StickyTodayBar today={today} />
     </>
