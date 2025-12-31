@@ -4,7 +4,8 @@ export const revalidate = 0;
 import { getPrisma } from "@/lib/prisma";
 
 type TodayInfo = { shop?: string; start?: string; end?: string };
-type FallbackShift = { id: string; shop: { area?: string; displayName: string }; date: Date; start?: string; end?: string };
+type PersonLite = { slug: string; displayName: string };
+type RecommendationLite = { id: string; body: string; fromPerson: PersonLite };
 
 function getShopAndTime(today: TodayInfo | undefined): { shop: string; time: string } {
   const shop = today?.shop ?? "—";
@@ -22,9 +23,31 @@ function fallbackDataFor(slug: string | undefined) {
   const s = typeof slug === "string" && slug.length > 0 ? slug : "anonymous";
   const simpleName = s.charAt(0).toUpperCase() + s.slice(1);
   const today: TodayInfo = { shop: "渋谷CHIC", start: "19:00", end: "23:00" };
-  const weekShifts: FallbackShift[] = [
-    { id: "t", shop: { area: "渋谷", displayName: "渋谷CHIC" }, date: new Date(), start: "19:00", end: "23:00" },
-    { id: "w1", shop: { area: "池袋", displayName: "池袋Mellow" }, date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), start: "20:00", end: "24:00" },
+  const abouts: RecommendationLite[] = [
+    {
+      id: "r1",
+      body:
+        "香りの立ち上がりが静かで、輪郭が最後まで崩れない。混ぜ物を増やさずに深さだけを出せるタイプ。熱の扱いが上手く、同じ構成でも日によって“今日の一番”に寄せてくる。",
+      fromPerson: { slug: "ben", displayName: "Ben" },
+    },
+    {
+      id: "r2",
+      body:
+        "甘さを足さずに余韻を伸ばす。派手さではなく、吸い終わりの空気感まで設計している。初手が強いだけの人ではなく、後半の静けさが続く。",
+      fromPerson: { slug: "emi", displayName: "Emi" },
+    },
+    {
+      id: "r3",
+      body:
+        "香りの層が薄くならない。ベースが透明で、上に乗る要素が濁らない。雑に強くしない、弱くしない。手数ではなく制御で勝つ人。",
+      fromPerson: { slug: "fuji", displayName: "Fuji" },
+    },
+    {
+      id: "r4",
+      body:
+        "“上手い”の説明が要らないタイプ。こちらの気分に合わせて角度を変える。言葉より、仕上がりで黙らせてくる。",
+      fromPerson: { slug: "chloe", displayName: "Chloe" },
+    },
   ];
   return {
     person: {
@@ -33,10 +56,7 @@ function fallbackDataFor(slug: string | undefined) {
       canComment: true,
     },
     today,
-    abouts: [
-      { id: "b", fromPerson: { slug: "ben", displayName: "Ben" }, body: "Creativity!" }
-    ],
-    weekShifts,
+    abouts,
     bys: [
       { id: "to1", toPerson: { slug: "ben", displayName: "Ben" } }
     ]
@@ -66,7 +86,7 @@ async function getPersonData(slug: string | undefined) {
       b.fromPersonReceivedCount - a.fromPersonReceivedCount ||
       b.createdAt.getTime() - a.createdAt.getTime()
     );
-    const aboutsTop = abouts.filter(Boolean).slice(0, 3);
+    const aboutsTop = abouts.filter(Boolean).slice(0, 5);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -101,7 +121,7 @@ async function getPersonData(slug: string | undefined) {
         }
       : undefined;
 
-    return { person, today: todayInfo, abouts: aboutsTop, weekShifts, bys };
+    return { person, today: todayInfo, abouts: aboutsTop, bys };
   } catch {
     return fallbackDataFor(slug);
   }
@@ -109,77 +129,62 @@ async function getPersonData(slug: string | undefined) {
 
 export default async function PeopleDetail({ params }: { params: { slug?: string } }) {
   const data = await getPersonData(params?.slug);
-  const { person, today, abouts, weekShifts, bys } = data as any;
-  const now = new Date();
-  const weekOnly = Array.isArray(weekShifts)
-    ? (weekShifts as any[]).filter(s => {
-        const d = s?.date instanceof Date ? s.date : new Date(s?.date);
-        return !isSameDay(d, now);
-      })
-    : [];
+  const { person, today, abouts, bys } = data as any;
 
   return (
     <main className="min-h-screen bg-black text-zinc-100 py-10 px-4 max-w-2xl mx-auto">
+      {/* Name */}
+      <header className="mb-10">
+        <h1 className="text-3xl font-semibold tracking-tight">{person.displayName}</h1>
+      </header>
+
+      {/* この人について (main) */}
+      {abouts.length > 0 && (
+        <section className="mb-12">
+          <h2 className="text-lg font-semibold mb-8">この人について</h2>
+          <div className="divide-y divide-zinc-800/50">
+            {abouts.map((rec: any) => (
+              <article key={rec.id} className="py-10">
+                <p className="whitespace-pre-wrap leading-8 text-zinc-200">
+                  {rec.body}
+                </p>
+                <div className="mt-6 text-sm text-zinc-400">
+                  —{" "}
+                  <a className="hover:underline" href={`/people/${rec.fromPerson.slug}`}>
+                    {rec.fromPerson.displayName}
+                  </a>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Today */}
-      <section className="mb-10">
+      <section className="mb-12">
+        <h2 className="text-lg font-semibold mb-4">Today</h2>
         <div className="flex items-baseline justify-between gap-4 text-sm text-zinc-300">
           <span className="min-w-0 truncate">{getShopAndTime(today).shop}</span>
           <span className="whitespace-nowrap font-mono tabular-nums">{getShopAndTime(today).time}</span>
         </div>
       </section>
 
-      {/* This Week (optional) */}
-      {person.isStaff && weekOnly.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-lg font-bold mb-3">This Week</h2>
-          <ul className="space-y-2">
-            {weekOnly.map((s: any) => {
-              const d = s.date instanceof Date ? s.date : new Date(s.date);
-              const start = s.startTime ? new Date(s.startTime) : null;
-              const end = s.endTime ? new Date(s.endTime) : null;
-              const pad2 = (n: number) => String(n).padStart(2, "0");
-              const startStr = s.start ?? (start ? `${pad2(start.getHours())}:${pad2(start.getMinutes())}` : undefined);
-              const endStr = s.end ?? (end ? `${pad2(end.getHours())}:${pad2(end.getMinutes())}` : undefined);
-              const shopName = s.shop?.displayName;
-              const line = shopName && startStr && endStr ? `${shopName} · ${startStr}-${endStr}` : `${shopName ?? "—"} · —`;
-              return (
-                <li key={s.id} className="text-sm text-zinc-300">
-                  {d.toLocaleDateString()} {line}
-                </li>
-              );
-            })}
-          </ul>
-          <div className="text-xs text-zinc-600 mt-2">
-            ※ 出勤予定は本人・関係者からの共有をもとに掲載しています。変更・不在となる場合があります。
-          </div>
-        </section>
-      )}
-
-      {/* Voices about */}
-      {abouts.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-lg font-bold mb-3">Voices about this person</h2>
-          <div className="space-y-4">
-            {abouts.map((rec: any) => (
-              <div key={rec.id} className="p-4 rounded-lg bg-zinc-900 flex gap-3 items-baseline">
-                <span>
-                  <a className="hover:underline font-bold" href={`/people/${rec.fromPerson.slug}`}>{rec.fromPerson.displayName}</a>
-                </span>
-                <span className="text-sm text-zinc-300">“{rec.body}”</span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-      {/* Voices by */}
+      {/* この人が選ぶ人 (navigation, subtle) */}
       {person.canComment && bys.length > 0 && (
-        <section>
-          <h2 className="text-lg font-bold mb-3">Voices by this person</h2>
-          <div className="space-x-3">
-            {bys.map((rec: any) =>
-              <a key={rec.id} href={`/people/${rec.toPerson.slug}`} className="inline-block text-zinc-400 underline hover:text-zinc-100">{rec.toPerson.displayName}</a>
-            )}
-          </div>
+        <section className="mt-16">
+          <h2 className="text-sm font-semibold text-zinc-400 mb-4">この人が選ぶ人</h2>
+          <ul className="space-y-3">
+            {bys.map((rec: any) => (
+              <li key={rec.id}>
+                <a
+                  href={`/people/${rec.toPerson.slug}`}
+                  className="text-sm text-zinc-400 hover:text-zinc-200 hover:underline"
+                >
+                  {rec.toPerson.displayName}
+                </a>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
     </main>
