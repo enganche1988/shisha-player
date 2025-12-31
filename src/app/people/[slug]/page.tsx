@@ -3,8 +3,9 @@ export const revalidate = 0;
 
 import { getPrisma } from "@/lib/prisma";
 
-function fallbackDataFor(slug: string) {
-  const simpleName = slug.charAt(0).toUpperCase() + slug.slice(1);
+function fallbackDataFor(slug: string | undefined) {
+  const s = typeof slug === "string" && slug.length > 0 ? slug : "anonymous";
+  const simpleName = s.charAt(0).toUpperCase() + s.slice(1);
   return {
     person: {
       displayName: simpleName,
@@ -23,9 +24,9 @@ function fallbackDataFor(slug: string) {
   };
 }
 
-// 派生値 (DB失敗やPerson未登録時→ダミー)
-async function getPersonData(slug: string) {
+async function getPersonData(slug: string | undefined) {
   const prisma = getPrisma();
+  if (!slug) return fallbackDataFor(slug);
   if (!prisma) return fallbackDataFor(slug);
   try {
     const person = await prisma.person.findUnique({ where: { slug } });
@@ -74,8 +75,8 @@ async function getPersonData(slug: string) {
   }
 }
 
-export default async function PeopleDetail({ params }: { params: { slug: string } }) {
-  const data = await getPersonData(params.slug);
+export default async function PeopleDetail({ params }: { params: { slug?: string } }) {
+  const data = await getPersonData(params?.slug);
   const { person, abouts, weekShifts, bys } = data;
 
   return (
