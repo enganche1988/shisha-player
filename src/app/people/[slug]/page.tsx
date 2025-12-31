@@ -8,6 +8,15 @@ type TodayInfo = { shop?: string; start?: string; end?: string };
 type PersonLite = { slug: string; displayName: string };
 type RecommendationLite = { id: string; body: string; fromPerson: PersonLite };
 
+function normalizeSlug(input: string | undefined) {
+  return (input ?? "").trim().toLowerCase();
+}
+
+function simpleNameFromSlug(slug: string) {
+  if (!slug) return "—";
+  return slug.charAt(0).toUpperCase() + slug.slice(1);
+}
+
 function getShopAndTime(today: TodayInfo | undefined): { shop: string; time: string } {
   const shop = today?.shop ?? "—";
   const start = today?.start;
@@ -34,14 +43,26 @@ function tierFor(slug: string | undefined): "Ⅰ" | "Ⅱ" | "Ⅲ" | null {
   return map[slug] ?? null;
 }
 
+const fallbackPeople: Array<{
+  slug: string;
+  displayName: string;
+  imageSrc?: string;
+  today?: TodayInfo;
+}> = [
+  { slug: "alice", displayName: "Alice", imageSrc: "/people/alice.svg", today: { shop: "渋谷CHIC", start: "19:00", end: "23:00" } },
+  { slug: "ben", displayName: "Ben", imageSrc: "/people/ben.svg", today: { shop: "池袋Mellow", start: "20:00", end: "24:00" } },
+  { slug: "chloe", displayName: "Chloe", today: { shop: "吉祥寺Rest", start: "21:00", end: "24:00" } },
+  { slug: "emi", displayName: "Emi", today: { shop: "渋谷CHIC", start: "18:30", end: "22:30" } },
+  { slug: "fuji", displayName: "Fuji" },
+  { slug: "daisuke", displayName: "Daisuke" },
+];
+
 function fallbackDataFor(slug: string | undefined) {
-  const s = typeof slug === "string" && slug.length > 0 ? slug : "anonymous";
-  const simpleName = s.charAt(0).toUpperCase() + s.slice(1);
-  const imageSrc =
-    s === "alice" ? "/people/alice.svg" :
-    s === "ben" ? "/people/ben.svg" :
-    null;
-  const today: TodayInfo = { shop: "渋谷CHIC", start: "19:00", end: "23:00" };
+  const s = normalizeSlug(slug);
+  const fromList = fallbackPeople.find(p => p.slug === s);
+  const displayName = fromList?.displayName ?? simpleNameFromSlug(s);
+  const imageSrc = fromList?.imageSrc ?? null;
+  const today: TodayInfo = fromList?.today ?? { shop: "渋谷CHIC", start: "19:00", end: "23:00" };
   const abouts: RecommendationLite[] = [
     {
       id: "r1",
@@ -70,11 +91,11 @@ function fallbackDataFor(slug: string | undefined) {
   ];
   return {
     person: {
-      displayName: simpleName,
+      displayName,
       isStaff: true,
       canComment: true,
+      imageSrc,
     },
-    imageSrc,
     today,
     abouts,
     bys: [
@@ -148,10 +169,10 @@ async function getPersonData(slug: string | undefined) {
 }
 
 export default async function PeopleDetail({ params }: { params: { slug?: string } }) {
-  const data = await getPersonData(params?.slug);
+  const slug = normalizeSlug(params?.slug);
+  const data = await getPersonData(slug);
   const { person, today, abouts, bys } = data as any;
-  const slug = params?.slug;
-  const derived = typeof slug === "string" && slug.length > 0 ? `/people/${slug}.svg` : null;
+  const derived = slug ? `/people/${slug}.svg` : null;
   const imageSrc: string =
     (typeof (person as any)?.imageSrc === "string" && (person as any).imageSrc.startsWith("/"))
       ? (person as any).imageSrc
