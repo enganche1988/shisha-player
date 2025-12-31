@@ -113,7 +113,10 @@ async function getPersonData(slug: string | undefined) {
   if (!slug) return fallbackDataFor(slug);
   if (!prisma) return fallbackDataFor(slug);
   try {
-    const person = await prisma.person.findUnique({ where: { slug } });
+    const s = normalizeSlug(slug);
+    const person = await prisma.person.findFirst({
+      where: { slug: { equals: s, mode: "insensitive" } },
+    });
     if (!person) return fallbackDataFor(slug);
 
     const aboutsRaw = await prisma.recommendation.findMany({
