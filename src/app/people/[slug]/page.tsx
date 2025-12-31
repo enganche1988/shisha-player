@@ -232,9 +232,12 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
                   </p>
                   <div className="mt-6 text-sm text-zinc-400">
                     —{" "}
-                    <a className="hover:underline" href={`/people/${rec.fromPerson.slug}`}>
-                      {rec.fromPerson.displayName}
-                    </a>
+                  <a
+                    className="font-medium text-zinc-200/90 hover:underline underline-offset-4 decoration-zinc-700/70"
+                    href={`/people/${rec.fromPerson.slug}`}
+                  >
+                    {rec.fromPerson.displayName}
+                  </a>
                     {(() => {
                       const tier = tierFor(rec.fromPerson?.slug);
                       if (!tier) return null;
@@ -282,7 +285,7 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
         {/* この人が選ぶ人 (navigation, subtle) */}
         {person.canComment && bys.length > 0 && (
           <section className="mt-16">
-            <h2 className="text-sm font-semibold text-zinc-400 mb-4">この人が選ぶ人</h2>
+          <h2 className="text-sm font-semibold text-zinc-500 mb-4">この人が選ぶ人</h2>
           <ul className="space-y-3">
             {[...bys]
               .sort((a: any, b: any) => String(a?.toPerson?.slug ?? "").localeCompare(String(b?.toPerson?.slug ?? "")))
@@ -292,7 +295,7 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
                   <li key={rec.id}>
                     <a
                       href={`/people/${rec.toPerson.slug}`}
-                      className="text-sm text-zinc-400 hover:underline underline-offset-4 decoration-zinc-700/70 focus-visible:outline-none focus-visible:underline focus-visible:underline-offset-4"
+                      className="text-sm text-zinc-400 hover:text-zinc-300 hover:underline underline-offset-4 decoration-zinc-700/70 focus-visible:outline-none focus-visible:underline focus-visible:underline-offset-4"
                     >
                       {rec.toPerson.displayName}
                       {tier ? <span className="ml-2 text-xs text-zinc-500">{tier}</span> : null}
