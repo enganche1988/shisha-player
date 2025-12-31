@@ -61,14 +61,6 @@ export function MessageSheet({ displayName, todayDate, todayShop, todayTime, ins
       if (e.key === "Escape") close();
     };
     window.addEventListener("keydown", onKeyDown);
-    // initial select
-    window.setTimeout(() => {
-      const el = textareaRef.current;
-      if (el) {
-        el.focus();
-        el.select();
-      }
-    }, 0);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, close]);
 
@@ -84,6 +76,7 @@ export function MessageSheet({ displayName, todayDate, todayShop, todayTime, ins
     } catch {
       const el = textareaRef.current;
       if (el) {
+        // programmatic selection (user drag not required)
         el.focus();
         el.select();
         document.execCommand("copy");
@@ -122,7 +115,7 @@ export function MessageSheet({ displayName, todayDate, todayShop, todayTime, ins
           <div className="absolute bottom-0 left-0 right-0 border-t border-zinc-800/50 bg-black/90 backdrop-blur-sm">
             <div className="mx-auto max-w-2xl px-4 py-4">
               <div className="flex items-center justify-between">
-                <div className="text-xs text-zinc-500">{copied ? "Copied" : ""}</div>
+                <div className="text-xs text-zinc-500">{copied ? "コピーしました" : ""}</div>
                 <button
                   type="button"
                   onClick={close}
@@ -137,15 +130,14 @@ export function MessageSheet({ displayName, todayDate, todayShop, todayTime, ins
               <div className="mt-3">
                 <textarea
                   ref={textareaRef}
+                  readOnly
                   value={text}
-                  onChange={(e) => setText(e.target.value)}
                   className="w-full resize-none rounded-md bg-zinc-950/80 p-3 text-sm leading-6 text-zinc-200 outline-none"
                   rows={9}
                 />
               </div>
 
               <div className="mt-3 text-xs text-zinc-500 space-y-1">
-                <div>・内容は自由に編集できます</div>
                 <div>・この文面はコピーできます</div>
               </div>
 
@@ -155,7 +147,7 @@ export function MessageSheet({ displayName, todayDate, todayShop, todayTime, ins
                   onClick={onCopyAndOpen}
                   className="text-sm text-zinc-200 hover:underline underline-offset-4 decoration-zinc-700/70"
                 >
-                  コピーしてInstagramを開く
+                  メッセージをコピーしてInstagramを開く
                 </button>
 
                 {instagramUrl ? null : null}
