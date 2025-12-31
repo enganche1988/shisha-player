@@ -125,7 +125,18 @@ export function MessageSheet({ displayName, todayDate, todayShop, todayTime, ins
                 </button>
               </div>
 
-              <div className="mt-2 text-sm text-zinc-200">このメッセージを送ってください</div>
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={onCopyAndOpen}
+                  className="w-full rounded-lg bg-zinc-100/10 px-4 py-3 text-sm font-medium text-zinc-100 hover:bg-zinc-100/15"
+                >
+                  メッセージをコピーしてInstagramを開く
+                </button>
+                <div className="mt-2 text-xs text-zinc-500">※ 押すと、下の文章が自動でコピーされます</div>
+              </div>
+
+              <div className="mt-5 text-sm text-zinc-400">Instagramで送られるメッセージ</div>
 
               <div className="mt-3">
                 <textarea
@@ -139,18 +150,6 @@ export function MessageSheet({ displayName, todayDate, todayShop, todayTime, ins
 
               <div className="mt-3 text-xs text-zinc-500 space-y-1">
                 <div>・この文面はコピーできます</div>
-              </div>
-
-              <div className="mt-4 flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={onCopyAndOpen}
-                  className="text-sm text-zinc-200 hover:underline underline-offset-4 decoration-zinc-700/70"
-                >
-                  メッセージをコピーしてInstagramを開く
-                </button>
-
-                {instagramUrl ? null : null}
               </div>
             </div>
           </div>
