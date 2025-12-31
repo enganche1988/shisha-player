@@ -116,14 +116,6 @@ export default async function HomePage() {
             );
           })}
         </div>
-        <div className="mt-10">
-          <a
-            href="/people/alice"
-            className="text-xs text-zinc-500 hover:underline underline-offset-4 decoration-zinc-700/70"
-          >
-            声
-          </a>
-        </div>
       </div>
     </main>
   );
