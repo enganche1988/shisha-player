@@ -19,6 +19,20 @@ function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
+function mapsSearchUrl(shopName: string) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shopName)}`;
+}
+
+function tierFor(slug: string | undefined): "Ⅰ" | "Ⅱ" | "Ⅲ" | null {
+  if (!slug) return null;
+  const map: Record<string, "Ⅰ" | "Ⅱ" | "Ⅲ"> = {
+    emi: "Ⅰ",
+    fuji: "Ⅱ",
+    chloe: "Ⅲ",
+  };
+  return map[slug] ?? null;
+}
+
 function fallbackDataFor(slug: string | undefined) {
   const s = typeof slug === "string" && slug.length > 0 ? slug : "anonymous";
   const simpleName = s.charAt(0).toUpperCase() + s.slice(1);
@@ -130,63 +144,115 @@ async function getPersonData(slug: string | undefined) {
 export default async function PeopleDetail({ params }: { params: { slug?: string } }) {
   const data = await getPersonData(params?.slug);
   const { person, today, abouts, bys } = data as any;
+  const todayShop = today?.shop as string | undefined;
+  const todayUrl = todayShop ? mapsSearchUrl(todayShop) : null;
 
   return (
-    <main className="min-h-screen bg-black text-zinc-100 py-10 px-4 max-w-2xl mx-auto">
-      {/* Name */}
-      <header className="mb-10">
-        <h1 className="text-3xl font-semibold tracking-tight">{person.displayName}</h1>
-      </header>
+    <>
+      <main className="min-h-screen bg-black text-zinc-100 py-10 px-4 pb-28 max-w-2xl mx-auto">
+        {/* Name */}
+        <header className="mb-10">
+          <h1 className="text-3xl font-semibold tracking-tight">{person.displayName}</h1>
+        </header>
 
-      {/* この人について (main) */}
-      {abouts.length > 0 && (
+        {/* この人について (main) */}
+        {abouts.length > 0 && (
+          <section className="mb-12">
+            <h2 className="text-lg font-semibold mb-8">この人について</h2>
+            <div className="divide-y divide-zinc-800/50">
+              {abouts.map((rec: any) => (
+                <article key={rec.id} className="py-10">
+                  <p className="whitespace-pre-wrap leading-8 text-zinc-200">
+                    {rec.body}
+                  </p>
+                  <div className="mt-6 text-sm text-zinc-400">
+                    —{" "}
+                    <a className="hover:underline" href={`/people/${rec.fromPerson.slug}`}>
+                      {rec.fromPerson.displayName}
+                    </a>
+                    {(() => {
+                      const tier = tierFor(rec.fromPerson?.slug);
+                      if (!tier) return null;
+                      const tierClass =
+                        tier === "Ⅰ" ? "text-emerald-200/70" : "text-zinc-500/80";
+                      return (
+                        <span className={`ml-2 text-xs ${tierClass}`}>
+                          {tier}
+                        </span>
+                      );
+                    })()}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Today */}
         <section className="mb-12">
-          <h2 className="text-lg font-semibold mb-8">この人について</h2>
-          <div className="divide-y divide-zinc-800/50">
-            {abouts.map((rec: any) => (
-              <article key={rec.id} className="py-10">
-                <p className="whitespace-pre-wrap leading-8 text-zinc-200">
-                  {rec.body}
-                </p>
-                <div className="mt-6 text-sm text-zinc-400">
-                  —{" "}
-                  <a className="hover:underline" href={`/people/${rec.fromPerson.slug}`}>
-                    {rec.fromPerson.displayName}
+          <h2 className="text-lg font-semibold mb-4">Today</h2>
+          {todayUrl ? (
+            <a
+              href={todayUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-baseline justify-between gap-4 text-sm text-zinc-300 hover:text-zinc-100"
+            >
+              <span className="min-w-0 truncate">{getShopAndTime(today).shop}</span>
+              <span className="whitespace-nowrap font-mono tabular-nums">
+                {getShopAndTime(today).time}
+                <span className="ml-2 text-zinc-500">↗</span>
+              </span>
+            </a>
+          ) : (
+            <div className="flex items-baseline justify-between gap-4 text-sm text-zinc-300">
+              <span className="min-w-0 truncate">{getShopAndTime(today).shop}</span>
+              <span className="whitespace-nowrap font-mono tabular-nums">{getShopAndTime(today).time}</span>
+            </div>
+          )}
+        </section>
+
+        {/* この人が選ぶ人 (navigation, subtle) */}
+        {person.canComment && bys.length > 0 && (
+          <section className="mt-16">
+            <h2 className="text-sm font-semibold text-zinc-400 mb-4">この人が選ぶ人</h2>
+            <ul className="space-y-3">
+              {bys.map((rec: any) => (
+                <li key={rec.id}>
+                  <a
+                    href={`/people/${rec.toPerson.slug}`}
+                    className="text-sm text-zinc-400 hover:text-zinc-200 hover:underline"
+                  >
+                    {rec.toPerson.displayName}
                   </a>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-      )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </main>
+      <StickyTodayBar today={today} />
+    </>
+  );
+}
 
-      {/* Today */}
-      <section className="mb-12">
-        <h2 className="text-lg font-semibold mb-4">Today</h2>
-        <div className="flex items-baseline justify-between gap-4 text-sm text-zinc-300">
-          <span className="min-w-0 truncate">{getShopAndTime(today).shop}</span>
-          <span className="whitespace-nowrap font-mono tabular-nums">{getShopAndTime(today).time}</span>
-        </div>
-      </section>
-
-      {/* この人が選ぶ人 (navigation, subtle) */}
-      {person.canComment && bys.length > 0 && (
-        <section className="mt-16">
-          <h2 className="text-sm font-semibold text-zinc-400 mb-4">この人が選ぶ人</h2>
-          <ul className="space-y-3">
-            {bys.map((rec: any) => (
-              <li key={rec.id}>
-                <a
-                  href={`/people/${rec.toPerson.slug}`}
-                  className="text-sm text-zinc-400 hover:text-zinc-200 hover:underline"
-                >
-                  {rec.toPerson.displayName}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-    </main>
+export function StickyTodayBar({ today }: { today: TodayInfo | undefined }) {
+  const hasToday = Boolean(today?.shop && today?.start && today?.end);
+  if (!hasToday) return null;
+  const shop = today!.shop!;
+  const url = mapsSearchUrl(shop);
+  const time = `${today!.start}-${today!.end}`;
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="fixed bottom-0 left-0 right-0 border-t border-zinc-800/50 bg-black/80 backdrop-blur-sm"
+    >
+      <div className="mx-auto flex max-w-2xl items-baseline justify-between gap-4 px-4 py-3 text-sm text-zinc-300">
+        <span className="min-w-0 truncate">{shop}</span>
+        <span className="whitespace-nowrap font-mono tabular-nums">{time}</span>
+      </div>
+    </a>
   );
 }
