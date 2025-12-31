@@ -175,8 +175,11 @@ async function getPersonData(slug: string | undefined) {
   }
 }
 
-export default async function PeopleDetail({ params }: { params: { slug?: string } }) {
-  const slug = normalizeSlug(params?.slug);
+type PeoplePageParams = { slug?: string };
+
+export default async function PeopleDetail({ params }: { params: PeoplePageParams | Promise<PeoplePageParams> }) {
+  const resolvedParams = await Promise.resolve(params);
+  const slug = normalizeSlug(resolvedParams?.slug);
   const data = await getPersonData(slug);
   const { person, today, abouts, bys } = data as any;
   const derived = slug ? `/people/${slug}.svg` : null;
@@ -212,7 +215,7 @@ export default async function PeopleDetail({ params }: { params: { slug?: string
           <h1 className="text-3xl font-semibold tracking-tight">
             {displayName}
             <span className="ml-3 text-xs text-zinc-500">
-              (param:{String(params?.slug)} / norm:{String(slug)})
+              (param:{String(resolvedParams?.slug)} / norm:{String(slug)})
             </span>
           </h1>
         </header>
