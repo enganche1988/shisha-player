@@ -196,13 +196,15 @@ export default async function PeopleDetail({ params }: { params: { slug?: string
               href={todayUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-baseline justify-between gap-4 text-sm text-zinc-300 hover:text-zinc-100"
+            className="group flex items-baseline justify-between gap-4 rounded-md text-sm text-zinc-300 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-700/60"
             >
-              <span className="min-w-0 truncate">{getShopAndTime(today).shop}</span>
-              <span className="whitespace-nowrap font-mono tabular-nums">
-                {getShopAndTime(today).time}
-                <span className="ml-2 text-zinc-500">↗</span>
-              </span>
+            <span className="min-w-0 truncate text-base font-medium text-zinc-200 group-hover:underline group-hover:decoration-zinc-700/70 underline-offset-4">
+              {getShopAndTime(today).shop}
+            </span>
+            <span className="whitespace-nowrap font-mono tabular-nums text-sm text-zinc-400">
+              {getShopAndTime(today).time}
+              <span className="ml-2 text-zinc-500">›</span>
+            </span>
             </a>
           ) : (
             <div className="flex items-baseline justify-between gap-4 text-sm text-zinc-300">
