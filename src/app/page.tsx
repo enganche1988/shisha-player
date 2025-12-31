@@ -1,4 +1,7 @@
-import { prisma } from "@/lib/prisma";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+import { getPrisma } from "@/lib/prisma";
 
 const fallbackPeople = [
   {
@@ -19,6 +22,8 @@ const fallbackPeople = [
 ];
 
 async function getTodaysPicks() {
+  const prisma = getPrisma();
+  if (!prisma) return fallbackPeople;
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);

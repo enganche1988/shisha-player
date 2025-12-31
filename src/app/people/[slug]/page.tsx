@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 
 function fallbackDataFor(slug: string) {
   const simpleName = slug.charAt(0).toUpperCase() + slug.slice(1);
@@ -25,6 +25,8 @@ function fallbackDataFor(slug: string) {
 
 // 派生値 (DB失敗やPerson未登録時→ダミー)
 async function getPersonData(slug: string) {
+  const prisma = getPrisma();
+  if (!prisma) return fallbackDataFor(slug);
   try {
     const person = await prisma.person.findUnique({ where: { slug } });
     if (!person) return fallbackDataFor(slug);
