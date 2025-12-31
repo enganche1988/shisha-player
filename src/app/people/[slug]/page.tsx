@@ -209,7 +209,12 @@ export default async function PeopleDetail({ params }: { params: { slug?: string
 
         {/* Name */}
         <header className="mb-10">
-          <h1 className="text-3xl font-semibold tracking-tight">{displayName}</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            {displayName}
+            <span className="ml-3 text-xs text-zinc-500">
+              (param:{String(params?.slug)} / norm:{String(slug)})
+            </span>
+          </h1>
         </header>
 
         {/* この人について (main) */}
