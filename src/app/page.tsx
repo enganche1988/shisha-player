@@ -3,21 +3,39 @@ export const revalidate = 0;
 
 import { getPrisma } from "@/lib/prisma";
 
-const fallbackPeople = [
+type Pick = {
+  slug: string;
+  displayName: string;
+  today?: {
+    shop?: string;
+    start?: string;
+    end?: string;
+  };
+};
+
+function formatTodayLine(p: Pick) {
+  const shop = p.today?.shop;
+  const start = p.today?.start;
+  const end = p.today?.end;
+  if (!shop || !start || !end) return "Today: —";
+  return `Today: ${shop} · ${start}-${end}`;
+}
+
+const fallbackPeople: Pick[] = [
   {
     slug: "alice",
     displayName: "Alice",
-    shop: { area: "渋谷", displayName: "渋谷CHIC" },
+    today: { shop: "渋谷CHIC", start: "19:00", end: "23:00" },
   },
   {
     slug: "ben",
     displayName: "Ben",
-    shop: { area: "池袋", displayName: "池袋Mellow" },
+    today: { shop: "池袋Mellow", start: "20:00", end: "24:00" },
   },
   {
     slug: "chloe",
     displayName: "Chloe",
-    shop: { area: "吉祥寺", displayName: "吉祥寺Rest" },
+    today: { shop: "吉祥寺Rest", start: "21:00", end: "24:00" },
   },
 ];
 
@@ -31,13 +49,19 @@ async function getTodaysPicks() {
       where: { date: today },
       include: { person: true, shop: true },
     });
-    const picks = shifts
-      .slice(0, 5)
-      .map(s => ({
+    const picks: Pick[] = shifts.slice(0, 5).map(s => {
+      const start = s.startTime ? new Date(s.startTime) : null;
+      const end = s.endTime ? new Date(s.endTime) : null;
+      const pad2 = (n: number) => String(n).padStart(2, "0");
+      const startStr = start ? `${pad2(start.getHours())}:${pad2(start.getMinutes())}` : undefined;
+      const endStr = end ? `${pad2(end.getHours())}:${pad2(end.getMinutes())}` : undefined;
+      const shopName = s.shop?.displayName ?? undefined;
+      return {
         slug: s.person.slug,
         displayName: s.person.displayName,
-        shop: s.shop,
-      }));
+        today: { shop: shopName, start: startStr, end: endStr },
+      };
+    });
     return picks;
   } catch {
     return fallbackPeople;
@@ -60,9 +84,7 @@ export default async function HomePage() {
                 <a href={`/people/${p.slug}`} className="text-lg font-semibold hover:underline text-zinc-100">
                   {p.displayName}
                 </a>
-                <div className="text-sm text-zinc-400 mt-1">
-                  {p.shop?.area && <span>{p.shop.area}・</span>}{p.shop?.displayName}
-                </div>
+                <div className="text-sm text-zinc-400 mt-1">{formatTodayLine(p)}</div>
               </div>
             </div>
           ))}
