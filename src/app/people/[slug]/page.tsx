@@ -13,8 +13,9 @@ function normalizeSlug(input: string | undefined) {
 }
 
 function simpleNameFromSlug(slug: string) {
-  if (!slug) return "—";
-  return slug.charAt(0).toUpperCase() + slug.slice(1);
+  const s = (slug ?? "").trim();
+  if (!s) return "";
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 function getShopAndTime(today: TodayInfo | undefined): { shop: string; time: string } {
@@ -45,22 +46,25 @@ function tierFor(slug: string | undefined): "Ⅰ" | "Ⅱ" | "Ⅲ" | null {
 
 const fallbackPeople: Array<{
   slug: string;
-  displayName: string;
+  name: string;
   imageSrc?: string;
   today?: TodayInfo;
 }> = [
-  { slug: "alice", displayName: "Alice", imageSrc: "/people/alice.svg", today: { shop: "渋谷CHIC", start: "19:00", end: "23:00" } },
-  { slug: "ben", displayName: "Ben", imageSrc: "/people/ben.svg", today: { shop: "池袋Mellow", start: "20:00", end: "24:00" } },
-  { slug: "chloe", displayName: "Chloe", today: { shop: "吉祥寺Rest", start: "21:00", end: "24:00" } },
-  { slug: "emi", displayName: "Emi", today: { shop: "渋谷CHIC", start: "18:30", end: "22:30" } },
-  { slug: "fuji", displayName: "Fuji" },
-  { slug: "daisuke", displayName: "Daisuke" },
+  { slug: "alice", name: "Alice", imageSrc: "/people/alice.svg", today: { shop: "渋谷CHIC", start: "19:00", end: "23:00" } },
+  { slug: "ben", name: "Ben", imageSrc: "/people/ben.svg", today: { shop: "池袋Mellow", start: "20:00", end: "24:00" } },
+  { slug: "chloe", name: "Chloe", today: { shop: "吉祥寺Rest", start: "21:00", end: "24:00" } },
+  { slug: "emi", name: "Emi", today: { shop: "渋谷CHIC", start: "18:30", end: "22:30" } },
+  { slug: "fuji", name: "Fuji" },
+  { slug: "daisuke", name: "Daisuke" },
 ];
 
 function fallbackDataFor(slug: string | undefined) {
   const s = normalizeSlug(slug);
   const fromList = fallbackPeople.find(p => p.slug === s);
-  const displayName = fromList?.displayName ?? simpleNameFromSlug(s);
+  const candidateName = (fromList as any)?.name;
+  const displayName =
+    (typeof candidateName === "string" && candidateName.trim().length > 0) ? candidateName :
+    (simpleNameFromSlug(s) ? simpleNameFromSlug(s) : "Anonymous");
   const imageSrc = fromList?.imageSrc ?? null;
   const today: TodayInfo = fromList?.today ?? { shop: "渋谷CHIC", start: "19:00", end: "23:00" };
   const abouts: RecommendationLite[] = [
@@ -91,7 +95,7 @@ function fallbackDataFor(slug: string | undefined) {
   ];
   return {
     person: {
-      displayName,
+      name: displayName,
       isStaff: true,
       canComment: true,
       imageSrc,
@@ -177,6 +181,9 @@ export default async function PeopleDetail({ params }: { params: { slug?: string
     (typeof (person as any)?.imageSrc === "string" && (person as any).imageSrc.startsWith("/"))
       ? (person as any).imageSrc
       : (derived ?? "/people/_placeholder.svg");
+  const displayName =
+    (typeof person?.name === "string" && person.name.trim().length > 0) ? person.name :
+    (simpleNameFromSlug(slug) ? simpleNameFromSlug(slug) : "Anonymous");
   const todayShop = today?.shop as string | undefined;
   const todayUrl = todayShop ? mapsSearchUrl(todayShop) : null;
 
@@ -199,7 +206,7 @@ export default async function PeopleDetail({ params }: { params: { slug?: string
 
         {/* Name */}
         <header className="mb-10">
-          <h1 className="text-3xl font-semibold tracking-tight">{person.displayName}</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">{displayName}</h1>
         </header>
 
         {/* この人について (main) */}
