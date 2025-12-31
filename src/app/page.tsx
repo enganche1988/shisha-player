@@ -13,12 +13,12 @@ type Pick = {
   };
 };
 
-function formatTodayLine(p: Pick) {
-  const shop = p.today?.shop;
+function getShopAndTime(p: Pick): { shop: string; time: string } {
+  const shop = p.today?.shop ?? "—";
   const start = p.today?.start;
   const end = p.today?.end;
-  if (!shop || !start || !end) return "Today: —";
-  return `Today: ${shop} · ${start}-${end}`;
+  const time = start && end ? `${start}-${end}` : "—";
+  return { shop, time };
 }
 
 const fallbackPeople: Pick[] = [
@@ -84,7 +84,10 @@ export default async function HomePage() {
                 <a href={`/people/${p.slug}`} className="text-lg font-semibold hover:underline text-zinc-100">
                   {p.displayName}
                 </a>
-                <div className="text-sm text-zinc-400 mt-1">{formatTodayLine(p)}</div>
+                <div className="mt-1 flex items-baseline justify-between gap-4 text-sm text-zinc-400">
+                  <span className="min-w-0 truncate">{getShopAndTime(p).shop}</span>
+                  <span className="whitespace-nowrap font-mono tabular-nums">{getShopAndTime(p).time}</span>
+                </div>
               </div>
             </div>
           ))}
