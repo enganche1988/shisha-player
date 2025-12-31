@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { TodayAll } from "./today-all.client";
 
 type PickRow = {
   slug: string;
@@ -48,25 +47,10 @@ function tierFor(slug: string): "Ⅰ" | "Ⅱ" | "Ⅲ" | null {
   return map[slug] ?? null;
 }
 
-function Toggle({ active, children, onClick }: { active: boolean; children: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={
-        "text-xs hover:underline underline-offset-4 decoration-zinc-700/70 " +
-        (active ? "text-zinc-200" : "text-zinc-500")
-      }
-    >
-      {children}
-    </button>
-  );
-}
-
 export function PicksWithAll({ picks, todayAll }: { picks: PickRow[]; todayAll: TodayRow[] }) {
   const [loc, setLoc] = useState<{ lat: number; lng: number }>(SHIBUYA);
-  const [mode, setMode] = useState<"curated" | "nearby">("curated");
-  const [showAll, setShowAll] = useState(false);
+  const [nearby, setNearby] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(5);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -80,51 +64,70 @@ export function PicksWithAll({ picks, todayAll }: { picks: PickRow[]; todayAll: 
   }, []);
 
   const computed = useMemo(() => {
-    const withDist = picks.map((p, idx) => {
+    const pickMap = new Map<string, PickRow>();
+    picks.forEach((p) => pickMap.set(p.slug, p));
+
+    const merged: PickRow[] = [
+      ...picks,
+      ...todayAll
+        .filter((r) => !pickMap.has(r.slug))
+        .map((r) => ({
+          ...r,
+          score: 0,
+        })),
+    ];
+
+    const withDist = merged.map((p, idx) => {
       const has = p.lat != null && p.lng != null;
       const km = has ? haversineKm(loc, { lat: p.lat!, lng: p.lng! }) : Number.POSITIVE_INFINITY;
-      const score = typeof p.score === "number" ? p.score : (100 - idx);
+      const score = typeof p.score === "number" ? p.score : 0;
       return { ...p, _km: km, _score: score, _idx: idx };
     });
 
-    if (mode === "nearby") {
-      return [...withDist].sort((a, b) => a._km - b._km || a._idx - b._idx);
+    if (nearby) {
+      return [...withDist].sort((a, b) => a._km - b._km || b._score - a._score || a._idx - b._idx);
     }
-    // curated
+    // curated default
     return [...withDist].sort((a, b) => b._score - a._score || a._idx - b._idx);
-  }, [picks, loc, mode]);
+  }, [picks, todayAll, loc, nearby]);
+
+  const shown = computed.slice(0, Math.min(visibleCount, 20));
 
   return (
     <>
       <div className="flex items-baseline justify-between">
         <h1 className="text-2xl font-bold mb-4">Today’s Picks</h1>
-        <div className="flex items-center gap-2">
-          <Toggle active={mode === "curated"} onClick={() => setMode("curated")}>Curated</Toggle>
-          <span className="text-zinc-700">|</span>
-          <Toggle active={mode === "nearby"} onClick={() => setMode("nearby")}>Nearby</Toggle>
-        </div>
+        <button
+          type="button"
+          onClick={() => setNearby((v) => !v)}
+          className={"text-xs hover:underline underline-offset-4 decoration-zinc-700/70 " + (nearby ? "text-zinc-200" : "text-zinc-500")}
+        >
+          近い順
+        </button>
       </div>
 
       <div className="divide-y divide-zinc-800/50">
-        {computed.slice(0, 5).map((p) => {
+        {shown.map((p: any, idx: number) => {
           const tier = tierFor(p.slug);
           const km = Number.isFinite(p._km) ? p._km : null;
+          const primary = idx < 5;
           return (
-            <div key={p.slug} className="py-4">
+            <div key={`${p.slug}-${p.shop}-${p.start}-${idx}`} className={primary ? "py-5" : "py-3"}>
               <div className="flex items-baseline justify-between gap-6">
                 <a
                   href={`/people/${p.slug}`}
-                  className="min-w-0 truncate text-lg font-semibold text-zinc-100 hover:underline underline-offset-4 decoration-zinc-700/70"
+                  className={
+                    "min-w-0 truncate hover:underline underline-offset-4 decoration-zinc-700/70 " +
+                    (primary ? "text-lg font-semibold text-zinc-100" : "text-sm font-medium text-zinc-300")
+                  }
                 >
                   {p.displayName}
                   {tier ? <span className="ml-2 text-sm font-normal text-zinc-500">{tier}</span> : null}
                 </a>
-                <div className="flex min-w-0 items-baseline gap-3 text-sm text-zinc-400">
+                <div className={"flex min-w-0 items-baseline gap-3 " + (primary ? "text-sm text-zinc-400" : "text-xs text-zinc-500")}>
                   <span className="min-w-0 truncate">{p.shop}</span>
                   <span className="whitespace-nowrap font-mono tabular-nums">{p.start}-{p.end}</span>
-                  <span className="whitespace-nowrap text-xs text-zinc-600">
-                    {km != null ? `${km.toFixed(1)}km` : "—"}
-                  </span>
+                  <span className="whitespace-nowrap text-xs text-zinc-600">{km != null ? `${km.toFixed(1)}km` : "—"}</span>
                 </div>
               </div>
             </div>
@@ -132,19 +135,17 @@ export function PicksWithAll({ picks, todayAll }: { picks: PickRow[]; todayAll: 
         })}
       </div>
 
-      {!showAll ? (
-        <div className="mt-10">
+      {visibleCount < 20 && computed.length > 5 ? (
+        <div className="mt-8">
           <button
             type="button"
-            onClick={() => setShowAll(true)}
+            onClick={() => setVisibleCount(20)}
             className="text-sm text-zinc-500 hover:underline underline-offset-4 decoration-zinc-700/70"
           >
-            すべて見る
+            すべてを見る
           </button>
         </div>
-      ) : (
-        <TodayAll rows={todayAll} />
-      )}
+      ) : null}
     </>
   );
 }

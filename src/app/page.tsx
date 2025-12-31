@@ -193,7 +193,7 @@ export default async function HomePage() {
   const todayAll = await getTodayAll();
   return (
     <main className="min-h-screen bg-black flex flex-col items-center justify-center text-white">
-      <div className="w-full max-w-xl px-4 py-20">
+      <div className="w-full max-w-xl px-4 py-10">
         <PicksWithAll picks={picks} todayAll={todayAll} />
       </div>
     </main>
