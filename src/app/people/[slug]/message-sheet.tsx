@@ -4,46 +4,52 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type Props = {
   displayName: string;
+  todayDate: Date;
   todayShop: string | null;
   todayTime: string | null;
   instagramUrl: string | null;
 };
 
-function buildTemplate(displayName: string, todayShop: string | null, todayTime: string | null) {
+function formatMonthDay(d: Date) {
+  const m = d.getMonth() + 1;
+  const day = d.getDate();
+  return `${m}月${day}日`;
+}
+
+function buildTemplate(displayName: string, todayDate: Date, todayShop: string | null, todayTime: string | null) {
+  const md = formatMonthDay(todayDate);
   const lines: string[] = [];
-  lines.push("シーシャプレイヤーで拝見しました。", "");
-
+  lines.push("shisha-player を見てご連絡しました。", "");
   if (todayShop) {
-    lines.push(`本日、${todayShop}にいらっしゃる予定を見てご連絡しました。`, "");
+    lines.push(`本日（${md}）、${todayShop}での出勤を拝見しています。`, "");
   } else {
-    lines.push("本日ご連絡しました。", "");
+    lines.push(`本日（${md}）、出勤を拝見しています。`, "");
   }
-
   if (todayTime) {
-    lines.push(`${todayTime}ごろ伺いたいのですが、混み具合いかがでしょう？`, "");
+    lines.push("もし可能でしたら、これから伺いたいです。", "");
   } else {
-    lines.push("本日伺いたいのですが、混み具合いかがでしょう？", "");
-  }
-
-  lines.push("可能なら目安だけ教えてください。", "");
-
-  if (displayName && displayName.trim().length > 0) {
-    lines.push(`— ${displayName}`);
+    lines.push("もし可能でしたら、これから伺いたいです。", "");
   }
 
   return lines.join("\n");
 }
 
-export function MessageSheet({ displayName, todayShop, todayTime, instagramUrl }: Props) {
+export function MessageSheet({ displayName, todayDate, todayShop, todayTime, instagramUrl }: Props) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const timerRef = useRef<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const text = useMemo(
-    () => buildTemplate(displayName, todayShop, todayTime),
-    [displayName, todayShop, todayTime]
+  const initialText = useMemo(
+    () => buildTemplate(displayName, todayDate, todayShop, todayTime),
+    [displayName, todayDate, todayShop, todayTime]
   );
+  const [text, setText] = useState(initialText);
+
+  useEffect(() => {
+    if (!open) return;
+    setText(initialText);
+  }, [open, initialText]);
 
   const close = useCallback(() => {
     setOpen(false);
@@ -55,6 +61,14 @@ export function MessageSheet({ displayName, todayShop, todayTime, instagramUrl }
       if (e.key === "Escape") close();
     };
     window.addEventListener("keydown", onKeyDown);
+    // initial select
+    window.setTimeout(() => {
+      const el = textareaRef.current;
+      if (el) {
+        el.focus();
+        el.select();
+      }
+    }, 0);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, close]);
 
@@ -80,14 +94,20 @@ export function MessageSheet({ displayName, todayShop, todayTime, instagramUrl }
     timerRef.current = window.setTimeout(() => setCopied(false), 900);
   }, [text]);
 
+  const onCopyAndOpen = useCallback(async () => {
+    await onCopy();
+    const url = instagramUrl ?? "https://instagram.com/";
+    window.open(url, "_blank", "noopener,noreferrer");
+  }, [instagramUrl, onCopy]);
+
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-sm text-zinc-500 hover:underline underline-offset-4 decoration-zinc-700/70"
+        className="inline-flex items-center justify-center rounded-full border border-zinc-700/60 bg-zinc-100/10 px-4 py-2 text-sm text-zinc-100 hover:bg-zinc-100/15"
       >
-        DM
+        メッセージを用意してInstagramを開く
       </button>
 
       {open ? (
@@ -112,35 +132,33 @@ export function MessageSheet({ displayName, todayShop, todayTime, instagramUrl }
                 </button>
               </div>
 
+              <div className="mt-2 text-sm text-zinc-200">このメッセージを送ってください</div>
+
               <div className="mt-3">
                 <textarea
                   ref={textareaRef}
-                  readOnly
                   value={text}
+                  onChange={(e) => setText(e.target.value)}
                   className="w-full resize-none rounded-md bg-zinc-950/80 p-3 text-sm leading-6 text-zinc-200 outline-none"
                   rows={9}
                 />
               </div>
 
+              <div className="mt-3 text-xs text-zinc-500 space-y-1">
+                <div>・内容は自由に編集できます</div>
+                <div>・この文面はコピーできます</div>
+              </div>
+
               <div className="mt-4 flex items-center justify-between">
                 <button
                   type="button"
-                  onClick={onCopy}
-                  className="text-sm text-zinc-300 hover:underline underline-offset-4 decoration-zinc-700/70"
+                  onClick={onCopyAndOpen}
+                  className="text-sm text-zinc-200 hover:underline underline-offset-4 decoration-zinc-700/70"
                 >
-                  Copy
+                  コピーしてInstagramを開く
                 </button>
 
-                {instagramUrl ? (
-                  <a
-                    href={instagramUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-zinc-500 hover:underline underline-offset-4 decoration-zinc-700/70"
-                  >
-                    Open Instagram
-                  </a>
-                ) : null}
+                {instagramUrl ? null : null}
               </div>
             </div>
           </div>

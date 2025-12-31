@@ -221,12 +221,7 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
 
         {/* Name */}
         <header className="mb-10">
-          <h1 className="text-3xl font-semibold tracking-tight">
-            {displayName}
-            <span className="ml-3 text-xs text-zinc-500">
-              (param:{String(resolvedParams?.slug)} / norm:{String(slug)})
-            </span>
-          </h1>
+          <h1 className="text-3xl font-semibold tracking-tight">{displayName}</h1>
         </header>
 
         {/* この人について (main) */}
@@ -291,6 +286,19 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
           )}
         </section>
 
+      {/* Contact */}
+      <section className="mb-16">
+        <h2 className="text-sm font-semibold text-zinc-400 mb-2">この人に連絡する</h2>
+        <div className="text-xs text-zinc-500 mb-4">InstagramのDMで連絡できます。文面は用意されています。</div>
+        <MessageSheet
+          displayName={displayName}
+          todayDate={new Date()}
+          todayShop={todayMeta.shop === "—" ? null : todayMeta.shop}
+          todayTime={todayMeta.time === "—" ? null : todayMeta.time}
+          instagramUrl={instagramUrl}
+        />
+      </section>
+
         {/* この人が選ぶ人 (navigation, subtle) */}
         {person.canComment && bys.length > 0 && (
           <section className="mt-16">
@@ -315,16 +323,6 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
           </ul>
           </section>
         )}
-
-      {/* DM */}
-      <section className="mt-14">
-        <MessageSheet
-          displayName={displayName}
-          todayShop={todayMeta.shop === "—" ? null : todayMeta.shop}
-          todayTime={todayMeta.time === "—" ? null : todayMeta.time}
-          instagramUrl={instagramUrl}
-        />
-      </section>
       </main>
       <StickyTodayBar today={today} />
     </>
