@@ -100,9 +100,9 @@ export function PicksWithAll({ picks, todayAll }: { picks: PickRow[]; todayAll: 
         <button
           type="button"
           onClick={() => setNearby((v) => !v)}
-          className={"text-xs hover:underline underline-offset-4 decoration-zinc-700/70 " + (nearby ? "text-zinc-200" : "text-zinc-500")}
+          className={"text-xs hover:underline underline-offset-4 decoration-zinc-700/70 " + (nearby ? "text-zinc-100" : "text-zinc-500")}
         >
-          近い順
+          {nearby ? "● 近い順" : "近い順"}
         </button>
       </div>
 
@@ -111,25 +111,33 @@ export function PicksWithAll({ picks, todayAll }: { picks: PickRow[]; todayAll: 
           const tier = tierFor(p.slug);
           const km = Number.isFinite(p._km) ? p._km : null;
           const primary = idx < 5;
+          const kmStr =
+            km == null ? "—" : (km.toFixed(1) === "0.0" ? "徒歩圏内" : `${km.toFixed(1)}km`);
           return (
-            <div key={`${p.slug}-${p.shop}-${p.start}-${idx}`} className={primary ? "py-5" : "py-3"}>
-              <div className="flex items-baseline justify-between gap-6">
-                <a
-                  href={`/people/${p.slug}`}
-                  className={
-                    "min-w-0 truncate hover:underline underline-offset-4 decoration-zinc-700/70 " +
-                    (primary ? "text-lg font-semibold text-zinc-100" : "text-sm font-medium text-zinc-300")
-                  }
-                >
-                  {p.displayName}
-                  {tier ? <span className="ml-2 text-sm font-normal text-zinc-500">{tier}</span> : null}
-                </a>
-                <div className={"flex min-w-0 items-baseline gap-3 " + (primary ? "text-sm text-zinc-400" : "text-xs text-zinc-500")}>
-                  <span className="min-w-0 truncate">{p.shop}</span>
-                  <span className="whitespace-nowrap font-mono tabular-nums">{p.start}-{p.end}</span>
-                  <span className="whitespace-nowrap text-xs text-zinc-600">{km != null ? `${km.toFixed(1)}km` : "—"}</span>
+            <div key={`${p.slug}-${p.shop}-${p.start}-${idx}`}>
+              <div className={primary ? "py-5" : "py-3"}>
+                <div className="flex items-baseline justify-between gap-6">
+                  <a
+                    href={`/people/${p.slug}`}
+                    className={
+                      "min-w-0 truncate hover:underline underline-offset-4 decoration-zinc-700/70 " +
+                      (primary ? "text-lg font-semibold text-zinc-100" : "text-sm font-medium text-zinc-300/70")
+                    }
+                  >
+                    {p.displayName}
+                    {tier ? <span className="ml-2 text-sm font-normal text-zinc-500">{tier}</span> : null}
+                  </a>
+                  <div className={"flex min-w-0 items-baseline gap-3 " + (primary ? "text-sm text-zinc-400" : "text-xs text-zinc-500/80")}>
+                    <span className="min-w-0 truncate">{p.shop}</span>
+                    <span className="whitespace-nowrap font-mono tabular-nums">{p.start}-{p.end}</span>
+                    <span className="whitespace-nowrap text-xs text-zinc-600">{kmStr}</span>
+                  </div>
                 </div>
               </div>
+
+              {idx === 4 && shown.length > 5 ? (
+                <div className="border-t border-zinc-800/50 my-5" />
+              ) : null}
             </div>
           );
         })}
