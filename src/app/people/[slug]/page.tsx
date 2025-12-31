@@ -196,7 +196,7 @@ export default async function PeopleDetail({ params }: { params: { slug?: string
               href={todayUrl}
               target="_blank"
               rel="noopener noreferrer"
-            className="group flex items-baseline justify-between gap-4 rounded-md text-sm text-zinc-300 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-700/60"
+            className="group -mx-2 flex items-baseline justify-between gap-4 rounded-md px-2 py-3 text-sm text-zinc-300 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-700/60"
             >
             <span className="min-w-0 truncate text-base font-medium text-zinc-200 group-hover:underline group-hover:decoration-zinc-700/70 underline-offset-4">
               {getShopAndTime(today).shop}
