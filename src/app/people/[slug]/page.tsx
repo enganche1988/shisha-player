@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { getPrisma } from "@/lib/prisma";
+import Image from "next/image";
 
 type TodayInfo = { shop?: string; start?: string; end?: string };
 type PersonLite = { slug: string; displayName: string };
@@ -36,6 +37,10 @@ function tierFor(slug: string | undefined): "Ⅰ" | "Ⅱ" | "Ⅲ" | null {
 function fallbackDataFor(slug: string | undefined) {
   const s = typeof slug === "string" && slug.length > 0 ? slug : "anonymous";
   const simpleName = s.charAt(0).toUpperCase() + s.slice(1);
+  const imageSrc =
+    s === "alice" ? "/people/alice.svg" :
+    s === "ben" ? "/people/ben.svg" :
+    null;
   const today: TodayInfo = { shop: "渋谷CHIC", start: "19:00", end: "23:00" };
   const abouts: RecommendationLite[] = [
     {
@@ -69,6 +74,7 @@ function fallbackDataFor(slug: string | undefined) {
       isStaff: true,
       canComment: true,
     },
+    imageSrc,
     today,
     abouts,
     bys: [
@@ -144,12 +150,32 @@ async function getPersonData(slug: string | undefined) {
 export default async function PeopleDetail({ params }: { params: { slug?: string } }) {
   const data = await getPersonData(params?.slug);
   const { person, today, abouts, bys } = data as any;
+  const imageSrc: string | null =
+    typeof person?.avatarUrl === "string" && person.avatarUrl.startsWith("/")
+      ? person.avatarUrl
+      : (data as any).imageSrc ?? null;
   const todayShop = today?.shop as string | undefined;
   const todayUrl = todayShop ? mapsSearchUrl(todayShop) : null;
 
   return (
     <>
       <main className="min-h-screen bg-black text-zinc-100 py-10 px-4 pb-28 max-w-2xl mx-auto">
+        {/* Image (quiet exhibit) */}
+        {imageSrc ? (
+          <div className="mb-10">
+            <div className="relative w-full aspect-[16/9] overflow-hidden rounded-md bg-zinc-950">
+              <Image
+                src={imageSrc}
+                alt=""
+                fill
+                sizes="(max-width: 768px) 100vw, 672px"
+                className="object-cover opacity-90"
+                priority={false}
+              />
+            </div>
+          </div>
+        ) : null}
+
         {/* Name */}
         <header className="mb-10">
           <h1 className="text-3xl font-semibold tracking-tight">{person.displayName}</h1>
