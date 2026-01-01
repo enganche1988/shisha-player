@@ -19,7 +19,7 @@ function formatMonthDay(d: Date) {
 function buildTemplate(displayName: string, todayDate: Date, todayShop: string | null, todayTime: string | null) {
   const md = formatMonthDay(todayDate);
   const lines: string[] = [];
-  lines.push("shisha-player を見てご連絡しました。", "");
+  lines.push("The Packer を見てご連絡しました。", "");
   lines.push(`${displayName}さんのシーシャについて、少し聞いてみたいです。`, "");
   lines.push(`よければ、いまのおすすめ（得意なミックスや雰囲気）を教えてください。`, "");
   lines.push(`（${md}）`, "");
