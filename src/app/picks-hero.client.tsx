@@ -81,7 +81,8 @@ function badgeFor(p: PickRow & { _km: number | null }): { label: string; tone: s
 
 export function PicksHeroCards({ picks, todayAll }: { picks: PickRow[]; todayAll: TodayRow[] }) {
   const [loc, setLoc] = useState<{ lat: number; lng: number }>(SHIBUYA);
-  const [visibleCount, setVisibleCount] = useState(5);
+  // phase0': keep the list finite and calm; no "more" UI on mobile
+  const visibleCount = 6;
 
   useEffect(() => {
     if (!SHOW_REALTIME_UI) return;
@@ -118,20 +119,18 @@ export function PicksHeroCards({ picks, todayAll }: { picks: PickRow[]; todayAll
     return [...withDist].sort((a, b) => b._score - a._score || a._idx - b._idx);
   }, [picks, todayAll, loc]);
 
-  const max = Math.min(visibleCount, 20);
-  const isCollapsed = max === 5;
-  const shown = computed.slice(0, max);
+  const shown = computed.slice(0, Math.min(visibleCount, 20));
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 md:px-10">
-      {/* Mobile: 3 cards top row, 2 cards second row, empty slot shows "もっと見る" */}
-      <div className="grid grid-cols-3 gap-4 md:grid-cols-3 md:gap-14">
+      {/* Mobile-first: 2-column grid (stable), Desktop: 3-column */}
+      <div className="grid grid-cols-2 gap-5 md:grid-cols-3 md:gap-14">
         {shown.map((p: any) => {
           return (
             <Link
               key={String(p.slug)}
               href={`/people/${p.slug}`}
-              className="group relative overflow-hidden rounded-2xl bg-black/10"
+              className="group relative overflow-hidden rounded-2xl bg-black/10 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/10"
             >
               <div className="relative aspect-[3/4]">
                 <Image
@@ -145,44 +144,20 @@ export function PicksHeroCards({ picks, todayAll }: { picks: PickRow[]; todayAll
                 />
 
                 {/* dark overlay for quiet tone */}
-                <div className="absolute inset-0 bg-black/35" />
-                <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
+                <div className="absolute inset-0 bg-black/30" />
+                <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
 
-                {/* name pill */}
-                <div className="absolute bottom-6 left-6">
-                  <span className="inline-flex items-center rounded-full border border-white/10 bg-white/10 px-7 py-3 text-[28px] font-semibold tracking-wide text-zinc-100/90 backdrop-blur-sm">
+                {/* name (single line, calm) */}
+                <div className="absolute bottom-3 left-3 right-3">
+                  <div className="truncate text-sm font-medium tracking-wide text-zinc-100/90">
                     {p.displayName}
-                  </span>
+                  </div>
                 </div>
               </div>
             </Link>
           );
         })}
-
-        {isCollapsed && computed.length > 5 ? (
-          <button
-            type="button"
-            onClick={() => setVisibleCount(20)}
-            className="relative col-span-1 flex aspect-[3/4] items-end justify-start rounded-2xl bg-transparent p-2 text-left"
-          >
-            <span className="text-sm text-zinc-500 hover:text-zinc-300 hover:underline underline-offset-4 decoration-zinc-700/70">
-              もっと見る
-            </span>
-          </button>
-        ) : null}
       </div>
-
-      {visibleCount < 20 && computed.length > 5 ? (
-        <div className="hidden pt-6 md:block">
-          <button
-            type="button"
-            onClick={() => setVisibleCount(20)}
-            className="text-sm text-zinc-500 hover:underline underline-offset-4 decoration-zinc-700/70"
-          >
-            もっと見る
-          </button>
-        </div>
-      ) : null}
     </div>
   );
 }
