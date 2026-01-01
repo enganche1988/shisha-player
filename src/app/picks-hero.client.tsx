@@ -11,6 +11,17 @@ type PickRow = {
   end: string;
   lat?: number;
   lng?: number;
+  score?: number; // higher = stronger (curated)
+};
+
+type TodayRow = {
+  slug: string;
+  displayName: string;
+  shop: string;
+  start: string;
+  end: string;
+  lat?: number;
+  lng?: number;
 };
 
 const SHIBUYA = { lat: 35.658034, lng: 139.701636 };
@@ -37,42 +48,12 @@ function toMinutes(hhmm: string): number | null {
   return h * 60 + mm;
 }
 
-function nowMinutes(): number {
-  const d = new Date();
-  return d.getHours() * 60 + d.getMinutes();
-}
-
-function inRangeNow(start: string, end: string): boolean {
-  const s0 = toMinutes(start);
-  const e0 = toMinutes(end);
-  if (s0 == null || e0 == null) return false;
-
-  let s = s0;
-  let e = e0;
-  let n = nowMinutes();
-
-  // overnight: 23:00-24:00 or 23:00-02:00 style
-  if (e <= s) e += 1440;
-  if (n < s) n += 1440;
-  return n >= s && n <= e;
-}
-
 function isLateSlot(start: string, end: string): boolean {
   const s = toMinutes(start);
   const e = toMinutes(end);
   if (s == null || e == null) return false;
   // treat "24:00" as 1440; if end is smaller it crosses midnight anyway
   return s >= 23 * 60 || e >= 24 * 60 || e <= s;
-}
-
-function statusTag(p: PickRow): { label: string; tone: string } {
-  if (inRangeNow(p.start, p.end)) {
-    return { label: "出勤中", tone: "border-white/10 bg-white/10 text-zinc-100" };
-  }
-  if (isLateSlot(p.start, p.end)) {
-    return { label: "深夜枠", tone: "border-zinc-500/20 bg-zinc-500/10 text-zinc-200" };
-  }
-  return { label: "今日ここ", tone: "border-zinc-400/15 bg-zinc-400/10 text-zinc-200" };
 }
 
 function kmLabel(km: number | null): string {
@@ -82,8 +63,20 @@ function kmLabel(km: number | null): string {
   return `${s}km`;
 }
 
-export function PicksHeroCards({ picks }: { picks: PickRow[] }) {
+function badgeFor(p: PickRow & { _km: number | null }): { label: string; tone: string } | null {
+  if (p._km != null && p._km <= 1.0) {
+    return { label: "徒歩圏内", tone: "border-white/10 bg-white/10 text-zinc-100" };
+  }
+  if (isLateSlot(p.start, p.end)) {
+    return { label: "深夜枠", tone: "border-zinc-500/20 bg-zinc-500/10 text-zinc-200" };
+  }
+  return null;
+}
+
+export function PicksHeroCards({ picks, todayAll }: { picks: PickRow[]; todayAll: TodayRow[] }) {
   const [loc, setLoc] = useState<{ lat: number; lng: number }>(SHIBUYA);
+  const [nearby, setNearby] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(5);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -97,18 +90,53 @@ export function PicksHeroCards({ picks }: { picks: PickRow[] }) {
   }, []);
 
   const computed = useMemo(() => {
-    return picks.map((p) => {
+    const pickMap = new Map<string, PickRow>();
+    picks.forEach((p) => pickMap.set(p.slug, p));
+
+    const merged: PickRow[] = [
+      ...picks,
+      ...todayAll
+        .filter((r) => !pickMap.has(r.slug))
+        .map((r) => ({
+          ...r,
+          score: 0,
+        })),
+    ];
+
+    const withDist = merged.map((p, idx) => {
       const has = p.lat != null && p.lng != null;
       const km = has ? haversineKm(loc, { lat: p.lat!, lng: p.lng! }) : null;
-      return { ...p, _km: km };
+      const score = typeof p.score === "number" ? p.score : 0;
+      return { ...p, _km: km, _score: score, _idx: idx };
     });
-  }, [picks, loc]);
+
+    if (nearby) {
+      return [...withDist].sort((a, b) => {
+        const ak = a._km ?? Number.POSITIVE_INFINITY;
+        const bk = b._km ?? Number.POSITIVE_INFINITY;
+        return ak - bk || b._score - a._score || a._idx - b._idx;
+      });
+    }
+    return [...withDist].sort((a, b) => b._score - a._score || a._idx - b._idx);
+  }, [picks, todayAll, loc, nearby]);
+
+  const shown = computed.slice(0, Math.min(visibleCount, 20));
 
   return (
     <div className="mx-auto w-full max-w-7xl px-3 md:px-10">
+      <div className="flex items-center justify-end pb-3">
+        <button
+          type="button"
+          onClick={() => setNearby((v) => !v)}
+          className={"text-xs hover:underline underline-offset-4 decoration-zinc-700/70 " + (nearby ? "text-zinc-100" : "text-zinc-500")}
+        >
+          {nearby ? "● 近い順" : "近い順"}
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
-        {computed.map((p) => {
-          const tag = statusTag(p);
+        {shown.map((p: any) => {
+          const badge = badgeFor(p);
           const meta = `${p.shop}  ${p.start}-${p.end}  ${kmLabel(p._km)}`;
           return (
             <Link
@@ -126,11 +154,13 @@ export function PicksHeroCards({ picks }: { picks: PickRow[] }) {
               <div className="relative aspect-[16/10] md:aspect-[4/5]">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent" />
 
-                <div className="absolute left-3 top-3">
-                  <span className={"inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] tracking-wide " + tag.tone}>
-                    {tag.label}
-                  </span>
-                </div>
+                {badge ? (
+                  <div className="absolute left-3 top-3">
+                    <span className={"inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] tracking-wide " + badge.tone}>
+                      {badge.label}
+                    </span>
+                  </div>
+                ) : null}
 
                 <div className="absolute inset-x-0 bottom-0 p-4">
                   <div className="text-[22px] font-semibold leading-tight tracking-tight text-zinc-100 md:text-[26px]">
@@ -149,6 +179,18 @@ export function PicksHeroCards({ picks }: { picks: PickRow[] }) {
           );
         })}
       </div>
+
+      {visibleCount < 20 && computed.length > 5 ? (
+        <div className="pt-6">
+          <button
+            type="button"
+            onClick={() => setVisibleCount(20)}
+            className="text-sm text-zinc-500 hover:underline underline-offset-4 decoration-zinc-700/70"
+          >
+            すべてを見る
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
