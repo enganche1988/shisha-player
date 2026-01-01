@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { peopleImageSrc, normalizePeopleImage } from "@/lib/people-image";
 
 const SHOW_REALTIME_UI = false; // phase0': hide distance / nearby / status
 
@@ -12,7 +13,7 @@ type PickRow = {
   shop: string;
   start: string;
   end: string;
-  imageSrc: string;
+  image: string; // filename with extension, e.g. "daigo.jpg" / "alice.svg"
   lat?: number;
   lng?: number;
   score?: number; // higher = stronger (curated)
@@ -24,7 +25,7 @@ type TodayRow = {
   shop: string;
   start: string;
   end: string;
-  imageSrc: string;
+  image: string;
   lat?: number;
   lng?: number;
 };
@@ -131,12 +132,13 @@ export function PicksHeroCards({ picks, todayAll }: { picks: PickRow[]; todayAll
             >
               <div className="relative aspect-[16/10] md:aspect-[4/5]">
                 <Image
-                  src={p.imageSrc}
+                  src={peopleImageSrc(normalizePeopleImage(p.image))}
                   alt=""
                   fill
                   sizes="(max-width: 768px) 100vw, 33vw"
                   className="object-cover object-center"
                   priority={false}
+                  unoptimized
                 />
 
                 {/* dark overlay for quiet tone + text readability */}

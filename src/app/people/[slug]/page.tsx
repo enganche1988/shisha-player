@@ -4,6 +4,7 @@ export const revalidate = 0;
 import { getPrisma } from "@/lib/prisma";
 import Image from "next/image";
 import { MessageSheet } from "./message-sheet";
+import { peopleImageSrc, normalizePeopleImage } from "@/lib/people-image";
 
 const SHOW_SCHEDULE_UI = false; // phase0': hide Today / schedule surfaces (keep data for later)
 
@@ -50,36 +51,36 @@ function tierFor(slug: string | undefined): "Ⅰ" | "Ⅱ" | "Ⅲ" | null {
 const fallbackPeople: Array<{
   slug: string;
   name: string;
-  imageSrc: string;
+  image: string; // filename with extension
   today?: TodayInfo;
   instagramUrl?: string;
 }> = [
-  { slug: "daigo", name: "Daigo", imageSrc: "/people/daigo.jpg", instagramUrl: "https://www.instagram.com/issho_daigo_bro?igsh=aWNrODY0bXdwOWtu" },
-  { slug: "alice", name: "Alice", imageSrc: "/people/alice.svg", today: { shop: "渋谷CHIC", start: "19:00", end: "23:00" }, instagramUrl: "https://instagram.com/" },
-  { slug: "ben", name: "Ben", imageSrc: "/people/ben.svg", today: { shop: "池袋Mellow", start: "20:00", end: "24:00" } },
-  { slug: "chloe", name: "Chloe", imageSrc: "/people/chloe.svg", today: { shop: "吉祥寺Rest", start: "21:00", end: "24:00" } },
-  { slug: "emi", name: "Emi", imageSrc: "/people/emi.svg", today: { shop: "渋谷CHIC", start: "18:30", end: "22:30" } },
-  { slug: "fuji", name: "Fuji", imageSrc: "/people/fuji.svg" },
-  { slug: "daisuke", name: "Daisuke", imageSrc: "/people/daisuke.svg" },
-  { slug: "haru", name: "Haru", imageSrc: "/people/haru.svg" },
-  { slug: "yuzu", name: "Yuzu", imageSrc: "/people/yuzu.svg" },
-  { slug: "taichi", name: "Taichi", imageSrc: "/people/taichi.svg" },
-  { slug: "miku", name: "Miku", imageSrc: "/people/miku.svg" },
-  { slug: "akira", name: "Akira", imageSrc: "/people/akira.svg" },
-  { slug: "rio", name: "Rio", imageSrc: "/people/rio.svg" },
-  { slug: "sena", name: "Sena", imageSrc: "/people/sena.svg" },
-  { slug: "noa", name: "Noa", imageSrc: "/people/noa.svg" },
-  { slug: "kana", name: "Kana", imageSrc: "/people/kana.svg" },
-  { slug: "ren", name: "Ren", imageSrc: "/people/ren.svg" },
-  { slug: "mei", name: "Mei", imageSrc: "/people/mei.svg" },
-  { slug: "kyo", name: "Kyo", imageSrc: "/people/kyo.svg" },
-  { slug: "suzu", name: "Suzu", imageSrc: "/people/suzu.svg" },
-  { slug: "lucas", name: "Lucas", imageSrc: "/people/lucas.svg" },
-  { slug: "aya", name: "Aya", imageSrc: "/people/aya.svg" },
-  { slug: "jin", name: "Jin", imageSrc: "/people/jin.svg" },
-  { slug: "hikari", name: "Hikari", imageSrc: "/people/hikari.svg" },
-  { slug: "leo", name: "Leo", imageSrc: "/people/leo.svg" },
-  { slug: "mina", name: "Mina", imageSrc: "/people/mina.svg" },
+  { slug: "daigo", name: "Daigo", image: "daigo.jpg", instagramUrl: "https://www.instagram.com/issho_daigo_bro?igsh=aWNrODY0bXdwOWtu" },
+  { slug: "alice", name: "Alice", image: "alice.svg", today: { shop: "渋谷CHIC", start: "19:00", end: "23:00" }, instagramUrl: "https://instagram.com/" },
+  { slug: "ben", name: "Ben", image: "ben.svg", today: { shop: "池袋Mellow", start: "20:00", end: "24:00" } },
+  { slug: "chloe", name: "Chloe", image: "chloe.svg", today: { shop: "吉祥寺Rest", start: "21:00", end: "24:00" } },
+  { slug: "emi", name: "Emi", image: "emi.svg", today: { shop: "渋谷CHIC", start: "18:30", end: "22:30" } },
+  { slug: "fuji", name: "Fuji", image: "fuji.svg" },
+  { slug: "daisuke", name: "Daisuke", image: "daisuke.svg" },
+  { slug: "haru", name: "Haru", image: "haru.svg" },
+  { slug: "yuzu", name: "Yuzu", image: "yuzu.svg" },
+  { slug: "taichi", name: "Taichi", image: "taichi.svg" },
+  { slug: "miku", name: "Miku", image: "miku.svg" },
+  { slug: "akira", name: "Akira", image: "akira.svg" },
+  { slug: "rio", name: "Rio", image: "rio.svg" },
+  { slug: "sena", name: "Sena", image: "sena.svg" },
+  { slug: "noa", name: "Noa", image: "noa.svg" },
+  { slug: "kana", name: "Kana", image: "kana.svg" },
+  { slug: "ren", name: "Ren", image: "ren.svg" },
+  { slug: "mei", name: "Mei", image: "mei.svg" },
+  { slug: "kyo", name: "Kyo", image: "kyo.svg" },
+  { slug: "suzu", name: "Suzu", image: "suzu.svg" },
+  { slug: "lucas", name: "Lucas", image: "lucas.svg" },
+  { slug: "aya", name: "Aya", image: "aya.svg" },
+  { slug: "jin", name: "Jin", image: "jin.svg" },
+  { slug: "hikari", name: "Hikari", image: "hikari.svg" },
+  { slug: "leo", name: "Leo", image: "leo.svg" },
+  { slug: "mina", name: "Mina", image: "mina.svg" },
 ];
 
 function fallbackDataFor(slug: string | undefined) {
@@ -89,7 +90,7 @@ function fallbackDataFor(slug: string | undefined) {
   const displayName =
     (typeof candidateName === "string" && candidateName.trim().length > 0) ? candidateName :
     (simpleNameFromSlug(s) ? simpleNameFromSlug(s) : "Anonymous");
-  const imageSrc = fromList!.imageSrc;
+  const image = fromList!.image;
   const today: TodayInfo = fromList?.today ?? { shop: "渋谷CHIC", start: "19:00", end: "23:00" };
   const instagramUrl = fromList?.instagramUrl ?? null;
   const abouts: RecommendationLite[] =
@@ -133,7 +134,7 @@ function fallbackDataFor(slug: string | undefined) {
       name: displayName,
       isStaff: true,
       canComment: true,
-      imageSrc,
+      image,
       instagramUrl,
     },
     today,
@@ -219,7 +220,8 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
   const slug = normalizeSlug(resolvedParams?.slug);
   const data = await getPersonData(slug);
   const { person, today, abouts, bys } = data as any;
-  const imageSrc: string = ((person as any)?.avatarUrl ?? (person as any)?.imageSrc) as string;
+  const image = normalizePeopleImage(((person as any)?.avatarUrl ?? (person as any)?.image ?? (person as any)?.imageSrc ?? "_placeholder.svg") as string);
+  const imageSrc = peopleImageSrc(image);
   const displayName =
     (typeof person?.name === "string" && person.name.trim().length > 0) ? person.name :
     (simpleNameFromSlug(slug) ? simpleNameFromSlug(slug) : "Anonymous");
@@ -244,6 +246,7 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
               sizes="(max-width: 768px) 100vw, 672px"
               className="object-cover opacity-90"
               priority={false}
+              unoptimized
             />
           </div>
         </div>

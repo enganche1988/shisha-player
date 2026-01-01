@@ -3,6 +3,7 @@ export const revalidate = 0;
 
 import { getPrisma } from "@/lib/prisma";
 import { PicksHeroCards } from "./picks-hero.client";
+import { normalizePeopleImage } from "@/lib/people-image";
 
 const USE_MOCK_FEATURED = true; // phase0: feature list is curated (no schedule / realtime)
 
@@ -12,7 +13,7 @@ type PickRow = {
   shop: string;
   start: string;
   end: string;
-  imageSrc: string;
+  image: string;
   lat?: number;
   lng?: number;
   score?: number;
@@ -24,7 +25,7 @@ type TodayRow = {
   shop: string;
   start: string;
   end: string;
-  imageSrc: string;
+  image: string;
   lat?: number;
   lng?: number;
 };
@@ -36,7 +37,7 @@ const fallbackPicks: PickRow[] = [
     shop: "—",
     start: "—",
     end: "—",
-    imageSrc: "/people/daigo.jpg",
+    image: "daigo.jpg",
     score: 110,
   },
   {
@@ -45,7 +46,7 @@ const fallbackPicks: PickRow[] = [
     shop: "渋谷CHIC",
     start: "19:00",
     end: "23:00",
-    imageSrc: "/people/alice.svg",
+    image: "alice.svg",
     lat: 35.658034,
     lng: 139.701636,
     score: 95,
@@ -56,7 +57,7 @@ const fallbackPicks: PickRow[] = [
     shop: "池袋Mellow",
     start: "20:00",
     end: "24:00",
-    imageSrc: "/people/ben.svg",
+    image: "ben.svg",
     lat: 35.729503,
     lng: 139.7109,
     score: 90,
@@ -67,7 +68,7 @@ const fallbackPicks: PickRow[] = [
     shop: "吉祥寺Rest",
     start: "21:00",
     end: "24:00",
-    imageSrc: "/people/chloe.svg",
+    image: "chloe.svg",
     lat: 35.703152,
     lng: 139.57978,
     score: 85,
@@ -78,7 +79,7 @@ const fallbackPicks: PickRow[] = [
     shop: "渋谷CHIC",
     start: "18:30",
     end: "22:30",
-    imageSrc: "/people/emi.svg",
+    image: "emi.svg",
     lat: 35.658034,
     lng: 139.701636,
     score: 80,
@@ -89,7 +90,7 @@ const fallbackPicks: PickRow[] = [
     shop: "池袋Mellow",
     start: "19:30",
     end: "23:30",
-    imageSrc: "/people/daisuke.svg",
+    image: "daisuke.svg",
     lat: 35.729503,
     lng: 139.7109,
     score: 70,
@@ -97,36 +98,36 @@ const fallbackPicks: PickRow[] = [
 ];
 
 const fallbackTodayAll: TodayRow[] = [
-  { slug: "daigo", displayName: "Daigo", shop: "—", start: "—", end: "—", imageSrc: "/people/daigo.jpg" },
+  { slug: "daigo", displayName: "Daigo", shop: "—", start: "—", end: "—", image: "daigo.jpg" },
   // Shibuya
-  { slug: "alice", displayName: "Alice", shop: "渋谷CHIC", start: "19:00", end: "23:00", imageSrc: "/people/alice.svg", lat: 35.658034, lng: 139.701636 },
-  { slug: "emi", displayName: "Emi", shop: "渋谷CHIC", start: "18:30", end: "22:30", imageSrc: "/people/emi.svg", lat: 35.658034, lng: 139.701636 },
-  { slug: "fuji", displayName: "Fuji", shop: "渋谷CHIC", start: "21:00", end: "24:00", imageSrc: "/people/fuji.svg", lat: 35.658034, lng: 139.701636 },
-  { slug: "haru", displayName: "Haru", shop: "渋谷CHIC", start: "23:00", end: "24:00", imageSrc: "/people/haru.svg", lat: 35.658034, lng: 139.701636 },
+  { slug: "alice", displayName: "Alice", shop: "渋谷CHIC", start: "19:00", end: "23:00", image: "alice.svg", lat: 35.658034, lng: 139.701636 },
+  { slug: "emi", displayName: "Emi", shop: "渋谷CHIC", start: "18:30", end: "22:30", image: "emi.svg", lat: 35.658034, lng: 139.701636 },
+  { slug: "fuji", displayName: "Fuji", shop: "渋谷CHIC", start: "21:00", end: "24:00", image: "fuji.svg", lat: 35.658034, lng: 139.701636 },
+  { slug: "haru", displayName: "Haru", shop: "渋谷CHIC", start: "23:00", end: "24:00", image: "haru.svg", lat: 35.658034, lng: 139.701636 },
   // Ikebukuro
-  { slug: "ben", displayName: "Ben", shop: "池袋Mellow", start: "20:00", end: "24:00", imageSrc: "/people/ben.svg", lat: 35.729503, lng: 139.7109 },
-  { slug: "daisuke", displayName: "Daisuke", shop: "池袋Mellow", start: "19:30", end: "23:30", imageSrc: "/people/daisuke.svg", lat: 35.729503, lng: 139.7109 },
-  { slug: "yuzu", displayName: "Yuzu", shop: "池袋Mellow", start: "18:00", end: "21:00", imageSrc: "/people/yuzu.svg", lat: 35.729503, lng: 139.7109 },
-  { slug: "taichi", displayName: "Taichi", shop: "池袋Mellow", start: "21:00", end: "24:00", imageSrc: "/people/taichi.svg", lat: 35.729503, lng: 139.7109 },
+  { slug: "ben", displayName: "Ben", shop: "池袋Mellow", start: "20:00", end: "24:00", image: "ben.svg", lat: 35.729503, lng: 139.7109 },
+  { slug: "daisuke", displayName: "Daisuke", shop: "池袋Mellow", start: "19:30", end: "23:30", image: "daisuke.svg", lat: 35.729503, lng: 139.7109 },
+  { slug: "yuzu", displayName: "Yuzu", shop: "池袋Mellow", start: "18:00", end: "21:00", image: "yuzu.svg", lat: 35.729503, lng: 139.7109 },
+  { slug: "taichi", displayName: "Taichi", shop: "池袋Mellow", start: "21:00", end: "24:00", image: "taichi.svg", lat: 35.729503, lng: 139.7109 },
   // Kichijoji
-  { slug: "chloe", displayName: "Chloe", shop: "吉祥寺Rest", start: "21:00", end: "24:00", imageSrc: "/people/chloe.svg", lat: 35.703152, lng: 139.57978 },
-  { slug: "miku", displayName: "Miku", shop: "吉祥寺Rest", start: "19:00", end: "21:00", imageSrc: "/people/miku.svg", lat: 35.703152, lng: 139.57978 },
-  { slug: "akira", displayName: "Akira", shop: "吉祥寺Rest", start: "23:00", end: "24:00", imageSrc: "/people/akira.svg", lat: 35.703152, lng: 139.57978 },
+  { slug: "chloe", displayName: "Chloe", shop: "吉祥寺Rest", start: "21:00", end: "24:00", image: "chloe.svg", lat: 35.703152, lng: 139.57978 },
+  { slug: "miku", displayName: "Miku", shop: "吉祥寺Rest", start: "19:00", end: "21:00", image: "miku.svg", lat: 35.703152, lng: 139.57978 },
+  { slug: "akira", displayName: "Akira", shop: "吉祥寺Rest", start: "23:00", end: "24:00", image: "akira.svg", lat: 35.703152, lng: 139.57978 },
   // Add more (dummy) to exceed 20
-  { slug: "rio", displayName: "Rio", shop: "渋谷CHIC", start: "19:00", end: "21:00", imageSrc: "/people/rio.svg", lat: 35.658034, lng: 139.701636 },
-  { slug: "sena", displayName: "Sena", shop: "渋谷CHIC", start: "21:00", end: "23:00", imageSrc: "/people/sena.svg", lat: 35.658034, lng: 139.701636 },
-  { slug: "noa", displayName: "Noa", shop: "渋谷CHIC", start: "23:00", end: "24:00", imageSrc: "/people/noa.svg", lat: 35.658034, lng: 139.701636 },
-  { slug: "kana", displayName: "Kana", shop: "池袋Mellow", start: "19:00", end: "21:00", imageSrc: "/people/kana.svg", lat: 35.729503, lng: 139.7109 },
-  { slug: "ren", displayName: "Ren", shop: "池袋Mellow", start: "21:00", end: "23:00", imageSrc: "/people/ren.svg", lat: 35.729503, lng: 139.7109 },
-  { slug: "mei", displayName: "Mei", shop: "池袋Mellow", start: "23:00", end: "24:00", imageSrc: "/people/mei.svg", lat: 35.729503, lng: 139.7109 },
-  { slug: "kyo", displayName: "Kyo", shop: "吉祥寺Rest", start: "18:00", end: "21:00", imageSrc: "/people/kyo.svg", lat: 35.703152, lng: 139.57978 },
-  { slug: "suzu", displayName: "Suzu", shop: "吉祥寺Rest", start: "19:00", end: "23:00", imageSrc: "/people/suzu.svg", lat: 35.703152, lng: 139.57978 },
-  { slug: "lucas", displayName: "Lucas", shop: "吉祥寺Rest", start: "23:00", end: "24:00", imageSrc: "/people/lucas.svg", lat: 35.703152, lng: 139.57978 },
-  { slug: "aya", displayName: "Aya", shop: "渋谷CHIC", start: "18:00", end: "22:00", imageSrc: "/people/aya.svg", lat: 35.658034, lng: 139.701636 },
-  { slug: "jin", displayName: "Jin", shop: "渋谷CHIC", start: "19:30", end: "23:30", imageSrc: "/people/jin.svg", lat: 35.658034, lng: 139.701636 },
-  { slug: "hikari", displayName: "Hikari", shop: "池袋Mellow", start: "18:30", end: "22:30", imageSrc: "/people/hikari.svg", lat: 35.729503, lng: 139.7109 },
-  { slug: "leo", displayName: "Leo", shop: "池袋Mellow", start: "20:30", end: "24:00", imageSrc: "/people/leo.svg", lat: 35.729503, lng: 139.7109 },
-  { slug: "mina", displayName: "Mina", shop: "吉祥寺Rest", start: "21:30", end: "24:00", imageSrc: "/people/mina.svg", lat: 35.703152, lng: 139.57978 },
+  { slug: "rio", displayName: "Rio", shop: "渋谷CHIC", start: "19:00", end: "21:00", image: "rio.svg", lat: 35.658034, lng: 139.701636 },
+  { slug: "sena", displayName: "Sena", shop: "渋谷CHIC", start: "21:00", end: "23:00", image: "sena.svg", lat: 35.658034, lng: 139.701636 },
+  { slug: "noa", displayName: "Noa", shop: "渋谷CHIC", start: "23:00", end: "24:00", image: "noa.svg", lat: 35.658034, lng: 139.701636 },
+  { slug: "kana", displayName: "Kana", shop: "池袋Mellow", start: "19:00", end: "21:00", image: "kana.svg", lat: 35.729503, lng: 139.7109 },
+  { slug: "ren", displayName: "Ren", shop: "池袋Mellow", start: "21:00", end: "23:00", image: "ren.svg", lat: 35.729503, lng: 139.7109 },
+  { slug: "mei", displayName: "Mei", shop: "池袋Mellow", start: "23:00", end: "24:00", image: "mei.svg", lat: 35.729503, lng: 139.7109 },
+  { slug: "kyo", displayName: "Kyo", shop: "吉祥寺Rest", start: "18:00", end: "21:00", image: "kyo.svg", lat: 35.703152, lng: 139.57978 },
+  { slug: "suzu", displayName: "Suzu", shop: "吉祥寺Rest", start: "19:00", end: "23:00", image: "suzu.svg", lat: 35.703152, lng: 139.57978 },
+  { slug: "lucas", displayName: "Lucas", shop: "吉祥寺Rest", start: "23:00", end: "24:00", image: "lucas.svg", lat: 35.703152, lng: 139.57978 },
+  { slug: "aya", displayName: "Aya", shop: "渋谷CHIC", start: "18:00", end: "22:00", image: "aya.svg", lat: 35.658034, lng: 139.701636 },
+  { slug: "jin", displayName: "Jin", shop: "渋谷CHIC", start: "19:30", end: "23:30", image: "jin.svg", lat: 35.658034, lng: 139.701636 },
+  { slug: "hikari", displayName: "Hikari", shop: "池袋Mellow", start: "18:30", end: "22:30", image: "hikari.svg", lat: 35.729503, lng: 139.7109 },
+  { slug: "leo", displayName: "Leo", shop: "池袋Mellow", start: "20:30", end: "24:00", image: "leo.svg", lat: 35.729503, lng: 139.7109 },
+  { slug: "mina", displayName: "Mina", shop: "吉祥寺Rest", start: "21:30", end: "24:00", image: "mina.svg", lat: 35.703152, lng: 139.57978 },
 ];
 
 async function getTodaysPicks(): Promise<PickRow[]> {
@@ -158,7 +159,7 @@ async function getTodaysPicks(): Promise<PickRow[]> {
         shop: shopName,
         start: startStr,
         end: endStr,
-        imageSrc: s.person.avatarUrl!,
+        image: normalizePeopleImage(s.person.avatarUrl ?? "_placeholder.svg"),
         lat: coords?.lat,
         lng: coords?.lng,
         score: 100 - idx, // preserve DB order as strength proxy
@@ -199,7 +200,7 @@ async function getTodayAll(): Promise<TodayRow[]> {
         shop: shopName,
         start: startStr,
         end: endStr,
-        imageSrc: s.person.avatarUrl!,
+        image: normalizePeopleImage(s.person.avatarUrl ?? "_placeholder.svg"),
         lat: coords?.lat,
         lng: coords?.lng,
       };
