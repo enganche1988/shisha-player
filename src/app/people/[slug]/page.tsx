@@ -244,7 +244,9 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
         {/* この人について (main) */}
         {abouts.length > 0 && (
           <section className="mb-12">
-            <h2 className="text-lg font-semibold mb-8">この人について</h2>
+            <h2 className="text-xl font-semibold tracking-tight mb-8">
+              {displayName} のシーシャ
+            </h2>
             <div className="divide-y divide-zinc-800/50">
               {abouts.map((rec: any) => (
                 <article key={rec.id} className="py-10">
@@ -366,3 +368,4 @@ export function StickyTodayBar({ today }: { today: TodayInfo | undefined }) {
     </a>
   );
 }
+
