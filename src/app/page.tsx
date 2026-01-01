@@ -2,8 +2,8 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { getPrisma } from "@/lib/prisma";
-import { PicksHeroCards } from "./picks-hero.client";
-import { normalizePeopleImage } from "@/lib/people-image";
+import Image from "next/image";
+import Link from "next/link";
 
 const USE_MOCK_FEATURED = true; // phase0: feature list is curated (no schedule / realtime)
 
@@ -169,7 +169,7 @@ async function getTodaysPicks(): Promise<PickRow[]> {
         shop: shopName,
         start: startStr,
         end: endStr,
-        image: normalizePeopleImage(s.person.avatarUrl ?? "_placeholder.svg"),
+        image: s.person.avatarUrl ?? "_placeholder.svg",
         lat: coords?.lat,
         lng: coords?.lng,
         score: 100 - idx, // preserve DB order as strength proxy
@@ -210,7 +210,7 @@ async function getTodayAll(): Promise<TodayRow[]> {
         shop: shopName,
         start: startStr,
         end: endStr,
-        image: normalizePeopleImage(s.person.avatarUrl ?? "_placeholder.svg"),
+        image: s.person.avatarUrl ?? "_placeholder.svg",
         lat: coords?.lat,
         lng: coords?.lng,
       };
@@ -221,35 +221,43 @@ async function getTodayAll(): Promise<TodayRow[]> {
   }
 }
 
+function pickFeatured(picks: PickRow[]) {
+  // phase0': only use safe photo paths (avoid /people route collision and non-photo assets)
+  return (
+    picks.find((p) => typeof p.image === "string" && p.image.startsWith("/photos/people/") && p.image.endsWith(".jpg")) ??
+    picks[0]
+  );
+}
+
 export default async function HomePage() {
   const picks = await getTodaysPicks();
-  const todayAll = await getTodayAll();
+  const featured = pickFeatured(picks);
 
   return (
-    <main className="bg-black text-white overflow-x-hidden">
-      <section className="relative min-h-[100svh] overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-zinc-950 via-black to-black" />
-        <div className="absolute -left-28 -top-28 h-[28rem] w-[28rem] rounded-full bg-zinc-800/25 blur-3xl" />
-        <div className="absolute -right-40 top-10 h-[34rem] w-[34rem] rounded-full bg-zinc-700/15 blur-3xl" />
-        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black to-transparent" />
+    <main className="min-h-[100svh] bg-black text-white">
+      <Link
+        href={`/people/${featured.slug}`}
+        aria-label={featured.displayName}
+        className="relative block min-h-[100svh] overflow-hidden"
+      >
+        <Image
+          src={featured.image}
+          alt=""
+          fill
+          sizes="100vw"
+          className="object-cover object-center"
+          priority={false}
+          unoptimized
+        />
+        <div className="absolute inset-0 bg-black/25" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
 
-        <div className="relative mx-auto flex min-h-[100svh] w-full max-w-7xl flex-col px-5 pt-7 pb-6 md:px-10 md:pt-10 md:pb-8">
-          <div className="flex items-start justify-between gap-6">
-            <div className="min-w-0">
-              <h1 className="text-[34px] font-semibold leading-[1.1] tracking-tight text-zinc-100 md:text-[52px]">
-                この人のシーシャを知る。
-              </h1>
-              <p className="mt-4 max-w-[28rem] text-sm text-zinc-400 md:text-base">
-                店ではなく、作る人で選ぶ。
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-7 flex-1 md:mt-8">
-            <PicksHeroCards picks={picks} todayAll={todayAll} />
+        <div className="absolute bottom-7 left-5 right-5">
+          <div className="text-sm font-medium tracking-wide text-zinc-100/90">
+            {featured.displayName}
           </div>
         </div>
-      </section>
+      </Link>
     </main>
   );
 }
