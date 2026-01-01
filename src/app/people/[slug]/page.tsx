@@ -57,6 +57,7 @@ const fallbackPeople: Array<{
   instagramUrl?: string;
 }> = [
   { slug: "daigo", name: "Daigo", image: "/photos/people/daigo.jpg", instagramUrl: "https://www.instagram.com/issho_daigo_bro?igsh=aWNrODY0bXdwOWtu" },
+  { slug: "tachiuo", name: "Tachiuo", image: "/photos/people/tachiuo.jpg", instagramUrl: "https://www.instagram.com/tachiuo2023?igsh=MXJxeDU0b2dsYzBkMA%3D%3D&utm_source=qr" },
   { slug: "alice", name: "Alice", image: "alice.svg", today: { shop: "渋谷CHIC", start: "19:00", end: "23:00" }, instagramUrl: "https://instagram.com/" },
   { slug: "ben", name: "Ben", image: "ben.svg", today: { shop: "池袋Mellow", start: "20:00", end: "24:00" } },
   { slug: "chloe", name: "Chloe", image: "chloe.svg", today: { shop: "吉祥寺Rest", start: "21:00", end: "24:00" } },
@@ -101,6 +102,15 @@ function fallbackDataFor(slug: string | undefined) {
             id: "d1",
             body:
               "輪郭がはっきりしているのに、強く押しつけない。香りの立ち上がりから後半の余韻まで、空気の密度が一定で気持ちいい。派手さより、丁寧さで惹きつけるタイプ。",
+            fromPerson: { slug: "ben", displayName: "Ben" },
+          },
+        ]
+      : s === "tachiuo"
+      ? [
+          {
+            id: "t1",
+            body:
+              "香りの輪郭が澄んでいて、余韻が静かに続く。派手に盛らず、最初から最後まで温度と空気感を揃えてくる。こちらのテンポに合わせてくれる人。",
             fromPerson: { slug: "ben", displayName: "Ben" },
           },
         ]
