@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+const SHOW_REALTIME_UI = false; // phase0': hide distance / nearby / status
+
 type PickRow = {
   slug: string;
   displayName: string;
@@ -78,10 +80,10 @@ function badgeFor(p: PickRow & { _km: number | null }): { label: string; tone: s
 
 export function PicksHeroCards({ picks, todayAll }: { picks: PickRow[]; todayAll: TodayRow[] }) {
   const [loc, setLoc] = useState<{ lat: number; lng: number }>(SHIBUYA);
-  const [nearby, setNearby] = useState(false);
   const [visibleCount, setVisibleCount] = useState(5);
 
   useEffect(() => {
+    if (!SHOW_REALTIME_UI) return;
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (p) => setLoc({ lat: p.coords.latitude, lng: p.coords.longitude }),
@@ -108,39 +110,19 @@ export function PicksHeroCards({ picks, todayAll }: { picks: PickRow[]; todayAll
 
     const withDist = merged.map((p, idx) => {
       const has = p.lat != null && p.lng != null;
-      const km = has ? haversineKm(loc, { lat: p.lat!, lng: p.lng! }) : null;
+      const km = SHOW_REALTIME_UI && has ? haversineKm(loc, { lat: p.lat!, lng: p.lng! }) : null;
       const score = typeof p.score === "number" ? p.score : 0;
       return { ...p, _km: km, _score: score, _idx: idx };
     });
-
-    if (nearby) {
-      return [...withDist].sort((a, b) => {
-        const ak = a._km ?? Number.POSITIVE_INFINITY;
-        const bk = b._km ?? Number.POSITIVE_INFINITY;
-        return ak - bk || b._score - a._score || a._idx - b._idx;
-      });
-    }
     return [...withDist].sort((a, b) => b._score - a._score || a._idx - b._idx);
-  }, [picks, todayAll, loc, nearby]);
+  }, [picks, todayAll, loc]);
 
   const shown = computed.slice(0, Math.min(visibleCount, 20));
 
   return (
     <div className="mx-auto w-full max-w-7xl px-3 md:px-10">
-      <div className="flex items-center justify-end pb-3">
-        <button
-          type="button"
-          onClick={() => setNearby((v) => !v)}
-          className={"text-xs hover:underline underline-offset-4 decoration-zinc-700/70 " + (nearby ? "text-zinc-100" : "text-zinc-500")}
-        >
-          {nearby ? "● 近い順" : "近い順"}
-        </button>
-      </div>
-
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
         {shown.map((p: any) => {
-          const badge = badgeFor(p);
-          const meta = `${p.shop}  ${p.start}-${p.end}  ${kmLabel(p._km)}`;
           return (
             <Link
               key={`${p.slug}-${p.shop}-${p.start}`}
@@ -161,20 +143,9 @@ export function PicksHeroCards({ picks, todayAll }: { picks: PickRow[]; todayAll
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/45 to-black/20" />
                 <div className="absolute inset-0 bg-black/20" />
 
-                {badge ? (
-                  <div className="absolute left-3 top-3">
-                    <span className={"inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] tracking-wide " + badge.tone}>
-                      {badge.label}
-                    </span>
-                  </div>
-                ) : null}
-
                 <div className="absolute inset-x-0 bottom-0 p-4">
                   <div className="text-[22px] font-semibold leading-tight tracking-tight text-zinc-100 md:text-[26px]">
                     {p.displayName}
-                  </div>
-                  <div className="mt-1 text-xs text-zinc-300/80">
-                    {meta}
                   </div>
                 </div>
 

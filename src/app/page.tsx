@@ -199,11 +199,6 @@ async function getTodayAll(): Promise<TodayRow[]> {
 export default async function HomePage() {
   const picks = await getTodaysPicks();
   const todayAll = await getTodayAll();
-  const dateLabel = new Intl.DateTimeFormat("ja-JP", {
-    month: "2-digit",
-    day: "2-digit",
-    weekday: "short",
-  }).format(new Date());
 
   return (
     <main className="bg-black text-white overflow-x-hidden">
@@ -217,14 +212,11 @@ export default async function HomePage() {
           <div className="flex items-start justify-between gap-6">
             <div className="min-w-0">
               <h1 className="text-[34px] font-semibold leading-[1.1] tracking-tight text-zinc-100 md:text-[52px]">
-                この人のシーシャに会いに行く。
+                この人のシーシャを知る。
               </h1>
               <p className="mt-4 max-w-[28rem] text-sm text-zinc-400 md:text-base">
                 店ではなく、作る人で選ぶ。
               </p>
-            </div>
-            <div className="mt-1 whitespace-nowrap text-xs text-zinc-500">
-              {dateLabel}
             </div>
           </div>
 

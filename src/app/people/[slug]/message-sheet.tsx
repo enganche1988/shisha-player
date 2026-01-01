@@ -20,16 +20,9 @@ function buildTemplate(displayName: string, todayDate: Date, todayShop: string |
   const md = formatMonthDay(todayDate);
   const lines: string[] = [];
   lines.push("shisha-player を見てご連絡しました。", "");
-  if (todayShop) {
-    lines.push(`本日（${md}）、${todayShop}での出勤を拝見しています。`, "");
-  } else {
-    lines.push(`本日（${md}）、出勤を拝見しています。`, "");
-  }
-  if (todayTime) {
-    lines.push("もし可能でしたら、これから伺いたいです。", "");
-  } else {
-    lines.push("もし可能でしたら、これから伺いたいです。", "");
-  }
+  lines.push(`${displayName}さんのシーシャについて、少し聞いてみたいです。`, "");
+  lines.push(`よければ、いまのおすすめ（得意なミックスや雰囲気）を教えてください。`, "");
+  lines.push(`（${md}）`, "");
 
   return lines.join("\n");
 }
@@ -93,7 +86,7 @@ export function MessageSheet({ displayName, todayDate, todayShop, todayTime, ins
         onClick={() => setOpen(true)}
         className="inline-flex items-center justify-center rounded-full border border-zinc-700/60 bg-zinc-100/10 px-4 py-2 text-sm text-zinc-100 hover:bg-zinc-100/15"
       >
-        メッセージを用意してInstagramを開く
+        Instagramで聞いてみる
       </button>
 
       {open ? (

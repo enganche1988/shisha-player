@@ -5,6 +5,8 @@ import { getPrisma } from "@/lib/prisma";
 import Image from "next/image";
 import { MessageSheet } from "./message-sheet";
 
+const SHOW_SCHEDULE_UI = false; // phase0': hide Today / schedule surfaces (keep data for later)
+
 type TodayInfo = { shop?: string; start?: string; end?: string };
 type PersonLite = { slug: string; displayName: string };
 type RecommendationLite = { id: string; body: string; fromPerson: PersonLite };
@@ -274,32 +276,32 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
             </div>
           </section>
         )}
-
-        {/* Today */}
-        <section className="mb-12">
-          <h2 className="text-lg font-semibold mb-4">Today</h2>
-          {todayUrl ? (
-            <a
-              href={todayUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            className="group -mx-2 flex items-baseline justify-between gap-4 rounded-md px-2 py-3 text-sm text-zinc-300 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-700/60"
-            >
-            <span className="min-w-0 truncate text-base font-medium text-zinc-200 group-hover:underline group-hover:decoration-zinc-700/70 underline-offset-4">
-              {getShopAndTime(today).shop}
-            </span>
-            <span className="whitespace-nowrap font-mono tabular-nums text-sm text-zinc-400">
-              {getShopAndTime(today).time}
-              <span className="ml-2 text-zinc-500">›</span>
-            </span>
-            </a>
-          ) : (
-            <div className="flex items-baseline justify-between gap-4 text-sm text-zinc-300">
-              <span className="min-w-0 truncate">{getShopAndTime(today).shop}</span>
-              <span className="whitespace-nowrap font-mono tabular-nums">{getShopAndTime(today).time}</span>
-            </div>
-          )}
-        </section>
+        {SHOW_SCHEDULE_UI ? (
+          <section className="mb-12">
+            <h2 className="text-lg font-semibold mb-4">Today</h2>
+            {todayUrl ? (
+              <a
+                href={todayUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              className="group -mx-2 flex items-baseline justify-between gap-4 rounded-md px-2 py-3 text-sm text-zinc-300 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-700/60"
+              >
+              <span className="min-w-0 truncate text-base font-medium text-zinc-200 group-hover:underline group-hover:decoration-zinc-700/70 underline-offset-4">
+                {getShopAndTime(today).shop}
+              </span>
+              <span className="whitespace-nowrap font-mono tabular-nums text-sm text-zinc-400">
+                {getShopAndTime(today).time}
+                <span className="ml-2 text-zinc-500">›</span>
+              </span>
+              </a>
+            ) : (
+              <div className="flex items-baseline justify-between gap-4 text-sm text-zinc-300">
+                <span className="min-w-0 truncate">{getShopAndTime(today).shop}</span>
+                <span className="whitespace-nowrap font-mono tabular-nums">{getShopAndTime(today).time}</span>
+              </div>
+            )}
+          </section>
+        ) : null}
 
       {/* Contact */}
       <section className="mb-16">
@@ -339,7 +341,7 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
           </section>
         )}
       </main>
-      <StickyTodayBar today={today} />
+      {SHOW_SCHEDULE_UI ? <StickyTodayBar today={today} /> : null}
     </>
   );
 }
