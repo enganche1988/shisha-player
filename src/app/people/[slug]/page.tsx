@@ -18,6 +18,20 @@ function normalizeSlug(input: string | undefined) {
   return (input ?? "").trim().toLowerCase();
 }
 
+function keyForPerson(p: { slug?: string; displayName?: string } | null | undefined) {
+  const s = String(p?.slug ?? "").trim().toLowerCase();
+  if (s) return `slug:${s}`;
+  const n = String(p?.displayName ?? "").trim().toLowerCase();
+  if (n) return `name:${n}`;
+  return "unknown";
+}
+
+function keyForMix(m: RecommendedMix | null | undefined) {
+  const n = String(m?.by ?? "").trim().toLowerCase();
+  if (n) return `name:${n}`;
+  return "unknown";
+}
+
 function simpleNameFromSlug(slug: string) {
   const s = (slug ?? "").trim();
   if (!s) return "";
@@ -259,6 +273,32 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
   const todayUrl = todayShop ? mapsSearchUrl(todayShop) : null;
   const todayMeta = getShopAndTime(today);
 
+  // group by recommender (3rd person) to avoid "menu/self-PR" misread
+  const grouped = (() => {
+    const map = new Map<
+      string,
+      { key: string; name: string; slug?: string; mixes: RecommendedMix[]; voices: RecommendationLite[] }
+    >();
+
+    for (const rec of (Array.isArray(abouts) ? abouts : []) as RecommendationLite[]) {
+      const k = keyForPerson(rec?.fromPerson);
+      const name = rec?.fromPerson?.displayName ?? "—";
+      const slug = rec?.fromPerson?.slug;
+      if (!map.has(k)) map.set(k, { key: k, name, slug, mixes: [], voices: [] });
+      map.get(k)!.voices.push(rec);
+    }
+
+    for (const m of mixes) {
+      const k = keyForMix(m);
+      const name = m.by || "—";
+      if (!map.has(k)) map.set(k, { key: k, name, mixes: [], voices: [] });
+      map.get(k)!.mixes.push(m);
+    }
+
+    // stable order: keep the strongest "voices" first, then mixes-only
+    return [...map.values()].sort((a, b) => (b.voices.length - a.voices.length) || a.name.localeCompare(b.name));
+  })();
+
   return (
     <>
       <main className="min-h-screen bg-black text-zinc-100 py-10 px-4 pb-28 max-w-2xl mx-auto">
@@ -282,69 +322,67 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
           <h1 className="text-3xl font-semibold tracking-tight">{displayName}</h1>
         </header>
 
-        {/* Mixes */}
-        {mixes.length > 0 ? (
+        {/* By recommender (3rd person) */}
+        {grouped.length > 0 ? (
           <section className="mb-12">
-            <h2 className="text-sm font-semibold text-zinc-400 mb-4">Mixes</h2>
-            <div className="divide-y divide-zinc-800/50">
-              {mixes.slice(0, 3).map((m, idx) => (
-                <div key={`${m.by}-${m.mix}-${idx}`} className="py-5">
-                  <div className="flex items-baseline justify-between gap-4">
-                    <div className="min-w-0 truncate text-base font-medium text-zinc-100">
-                      {m.mix}
+            <div className="divide-y divide-zinc-800/60">
+              {grouped.map((g) => {
+                const mixesTop = g.mixes.slice(0, 3);
+                const voicesTop = g.voices.slice(0, 3);
+                return (
+                  <div key={g.key} className="py-10">
+                    <div className="text-sm font-semibold text-zinc-300">
+                      From{" "}
+                      {g.slug ? (
+                        <a
+                          href={`/people/${g.slug}`}
+                          className="text-zinc-200/90 hover:underline underline-offset-4 decoration-zinc-700/70"
+                        >
+                          {g.name}
+                        </a>
+                      ) : (
+                        <span className="text-zinc-200/90">{g.name}</span>
+                      )}
                     </div>
-                    <div className="whitespace-nowrap text-xs text-zinc-500">
-                      — {m.by}
-                    </div>
+
+                    {mixesTop.length > 0 ? (
+                      <div className="mt-6">
+                        <div className="text-xs text-zinc-500">Mix</div>
+                        <div className="mt-3 divide-y divide-zinc-800/50">
+                          {mixesTop.map((m, idx) => (
+                            <div key={`${g.key}-mix-${m.mix}-${idx}`} className="py-4">
+                              <div className="text-base font-medium text-zinc-100">{m.mix}</div>
+                              {m.note ? (
+                                <div className="mt-2 text-xs text-zinc-500 line-clamp-1">
+                                  {m.note}
+                                </div>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {voicesTop.length > 0 ? (
+                      <div className="mt-8">
+                        <div className="text-xs text-zinc-500">Voice</div>
+                        <div className="mt-4 space-y-8">
+                          {voicesTop.map((rec: any) => (
+                            <div key={`${g.key}-voice-${rec.id}`}>
+                              <p className="whitespace-pre-wrap leading-8 text-zinc-200">
+                                {rec.body}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
-                  {m.note ? (
-                    <div className="mt-2 truncate text-xs text-zinc-500">
-                      {m.note}
-                    </div>
-                  ) : null}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         ) : null}
-
-        {/* この人について (main) */}
-        {abouts.length > 0 && (
-          <section className="mb-12">
-            <h2 className="text-xl font-semibold tracking-tight mb-8">
-              {displayName} のシーシャ
-            </h2>
-            <div className="divide-y divide-zinc-800/50">
-              {abouts.map((rec: any) => (
-                <article key={rec.id} className="py-10">
-                  <p className="whitespace-pre-wrap leading-8 text-zinc-200">
-                    {rec.body}
-                  </p>
-                  <div className="mt-6 text-sm text-zinc-400">
-                    —{" "}
-                  <a
-                    className="font-medium text-zinc-200/90 hover:underline underline-offset-4 decoration-zinc-700/70"
-                    href={`/people/${rec.fromPerson.slug}`}
-                  >
-                    {rec.fromPerson.displayName}
-                  </a>
-                    {(() => {
-                      const tier = tierFor(rec.fromPerson?.slug);
-                      if (!tier) return null;
-                      const tierClass =
-                        tier === "Ⅰ" ? "text-emerald-200/70" : "text-zinc-500/80";
-                      return (
-                        <span className={`ml-2 text-xs ${tierClass}`}>
-                          {tier}
-                        </span>
-                      );
-                    })()}
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-        )}
         {SHOW_SCHEDULE_UI ? (
           <section className="mb-12">
             <h2 className="text-lg font-semibold mb-4">Today</h2>
