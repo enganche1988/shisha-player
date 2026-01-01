@@ -333,23 +333,25 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
         {/* By recommender (3rd person) */}
         {grouped.length > 0 ? (
           <section className="mb-12">
-            <div className="divide-y divide-zinc-800/60">
+            <div className="space-y-10">
               {grouped.map((g) => {
                 const mixesTop = g.mixes.slice(0, 3);
                 const voicesTop = g.voices.slice(0, 3);
                 return (
-                  <div key={g.key} className="py-10">
-                    <div className="text-sm font-semibold text-zinc-300">
-                      From{" "}
+                  <div
+                    key={g.key}
+                    className="rounded-lg border border-white/10 p-6 md:p-8"
+                  >
+                    <div className="text-base font-semibold tracking-tight text-zinc-200">
                       {g.slug ? (
                         <a
                           href={`/people/${g.slug}`}
-                          className="text-zinc-200/90 hover:underline underline-offset-4 decoration-zinc-700/70"
+                          className="hover:underline underline-offset-4 decoration-zinc-700/70"
                         >
                           {g.name}
                         </a>
                       ) : (
-                        <span className="text-zinc-200/90">{g.name}</span>
+                        <span>{g.name}</span>
                       )}
                     </div>
 
@@ -372,8 +374,8 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
                     ) : null}
 
                     {voicesTop.length > 0 ? (
-                      <div className="mt-8">
-                        <div className="text-xs text-zinc-500">Voice</div>
+                      <div className="mt-10">
+                        <div className="text-xs text-zinc-500">Comment</div>
                         <div className="mt-4 space-y-8">
                           {voicesTop.map((rec: any) => (
                             <div key={`${g.key}-voice-${rec.id}`}>
