@@ -118,11 +118,14 @@ export function PicksHeroCards({ picks, todayAll }: { picks: PickRow[]; todayAll
     return [...withDist].sort((a, b) => b._score - a._score || a._idx - b._idx);
   }, [picks, todayAll, loc]);
 
-  const shown = computed.slice(0, Math.min(visibleCount, 20));
+  const max = Math.min(visibleCount, 20);
+  const isCollapsed = max === 5;
+  const shown = computed.slice(0, max);
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 md:px-10">
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-14">
+      {/* Mobile: 3 cards top row, 2 cards second row, empty slot shows "もっと見る" */}
+      <div className="grid grid-cols-3 gap-4 md:grid-cols-3 md:gap-14">
         {shown.map((p: any) => {
           return (
             <Link
@@ -155,16 +158,28 @@ export function PicksHeroCards({ picks, todayAll }: { picks: PickRow[]; todayAll
             </Link>
           );
         })}
+
+        {isCollapsed && computed.length > 5 ? (
+          <button
+            type="button"
+            onClick={() => setVisibleCount(20)}
+            className="relative col-span-1 flex aspect-[3/4] items-end justify-start rounded-2xl bg-transparent p-2 text-left"
+          >
+            <span className="text-sm text-zinc-500 hover:text-zinc-300 hover:underline underline-offset-4 decoration-zinc-700/70">
+              もっと見る
+            </span>
+          </button>
+        ) : null}
       </div>
 
       {visibleCount < 20 && computed.length > 5 ? (
-        <div className="pt-6">
+        <div className="hidden pt-6 md:block">
           <button
             type="button"
             onClick={() => setVisibleCount(20)}
             className="text-sm text-zinc-500 hover:underline underline-offset-4 decoration-zinc-700/70"
           >
-            すべてを見る
+            もっと見る
           </button>
         </div>
       ) : null}

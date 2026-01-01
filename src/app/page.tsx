@@ -236,15 +236,15 @@ export default async function HomePage() {
 
         <div className="relative mx-auto flex min-h-[100svh] w-full max-w-7xl flex-col px-5 pt-7 pb-6 md:px-10 md:pt-10 md:pb-8">
           <div className="min-w-0">
-            <h1 className="font-serif text-[40px] font-medium leading-[1.05] tracking-tight text-zinc-100 md:text-[64px]">
+            <h1 className="font-serif text-[36px] font-medium leading-[1.05] tracking-tight text-zinc-100 md:text-[64px]">
               Packerを探す
             </h1>
-            <p className="mt-5 max-w-[28rem] text-base text-zinc-300/80 md:text-lg">
+            <p className="mt-4 max-w-[28rem] text-sm text-zinc-300/80 md:text-lg">
               店ではなく、作る人で選ぶ。
             </p>
           </div>
 
-          <div className="mt-10 flex-1 md:mt-12">
+          <div className="mt-6 flex-1 md:mt-12">
             <PicksHeroCards picks={picks} todayAll={todayAll} />
           </div>
         </div>
