@@ -5,6 +5,7 @@ import { getPrisma } from "@/lib/prisma";
 import Image from "next/image";
 import { MessageSheet } from "./message-sheet";
 import { peopleImageSrc, normalizePeopleImage } from "@/lib/people-image";
+import { notFound } from "next/navigation";
 
 const SHOW_SCHEDULE_UI = false; // phase0': hide Today / schedule surfaces (keep data for later)
 
@@ -218,6 +219,9 @@ type PeoplePageParams = { slug?: string };
 export default async function PeopleDetail({ params }: { params: PeoplePageParams | Promise<PeoplePageParams> }) {
   const resolvedParams = await Promise.resolve(params);
   const slug = normalizeSlug(resolvedParams?.slug);
+  if (/\.(jpg|jpeg|png|webp|gif|svg)$/.test(slug)) {
+    notFound();
+  }
   const data = await getPersonData(slug);
   const { person, today, abouts, bys } = data as any;
   const image = normalizePeopleImage(((person as any)?.avatarUrl ?? (person as any)?.image ?? (person as any)?.imageSrc ?? "_placeholder.svg") as string);
