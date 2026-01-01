@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -9,6 +10,7 @@ type PickRow = {
   shop: string;
   start: string;
   end: string;
+  imageSrc: string;
   lat?: number;
   lng?: number;
   score?: number; // higher = stronger (curated)
@@ -20,6 +22,7 @@ type TodayRow = {
   shop: string;
   start: string;
   end: string;
+  imageSrc: string;
   lat?: number;
   lng?: number;
 };
@@ -144,15 +147,19 @@ export function PicksHeroCards({ picks, todayAll }: { picks: PickRow[]; todayAll
               href={`/people/${p.slug}`}
               className="group relative overflow-hidden rounded-2xl border border-zinc-800/60 bg-zinc-950 shadow-[0_0_0_1px_rgba(0,0,0,0.2)]"
             >
-              <div className="absolute inset-0">
-                <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black" />
-                <div className="absolute -left-16 -top-20 h-56 w-56 rounded-full bg-zinc-700/20 blur-3xl" />
-                <div className="absolute -bottom-24 -right-20 h-72 w-72 rounded-full bg-zinc-600/10 blur-3xl" />
-                <div className="absolute inset-0 bg-black/35" />
-              </div>
-
               <div className="relative aspect-[16/10] md:aspect-[4/5]">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent" />
+                <Image
+                  src={p.imageSrc}
+                  alt=""
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover object-center"
+                  priority={false}
+                />
+
+                {/* dark overlay for quiet tone + text readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/45 to-black/20" />
+                <div className="absolute inset-0 bg-black/20" />
 
                 {badge ? (
                   <div className="absolute left-3 top-3">

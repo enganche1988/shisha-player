@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+  <defs>
+    <linearGradient id="g" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#0a0a0a"/>
+      <stop offset="0.58" stop-color="#131313"/>
+      <stop offset="1" stop-color="#0b0b0b"/>
+    </linearGradient>
+    <radialGradient id="r" cx="66%" cy="44%" r="74%">
+      <stop offset="0" stop-color="#2d2d2d" stop-opacity="0.27"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.76" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.6  0 0 0 0 0.6  0 0 0 0 0.6  0 0 0 0.13 0"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="675" fill="url(#g)"/>
+  <circle cx="800" cy="310" r="455" fill="url(#r)"/>
+  <path d="M-90 560 C 300 470, 440 650, 700 590 S 1100 520, 1290 610" fill="none" stroke="#1a1a1a" stroke-width="2" opacity="0.9"/>
+  <path d="M-80 450 C 320 370, 500 540, 750 505 S 1120 420, 1280 505" fill="none" stroke="#161616" stroke-width="1" opacity="0.9"/>
+  <rect width="1200" height="675" filter="url(#grain)" opacity="0.25"/>
+</svg>
+
+

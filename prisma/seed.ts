@@ -28,12 +28,12 @@ async function main() {
 
   // 1. Person 6人
   const peopleRaw = [
-    { slug: "alice", displayName: "Alice", isStaff: true, canComment: true },
-    { slug: "ben", displayName: "Ben", isStaff: true, canComment: true },
-    { slug: "chloe", displayName: "Chloe", isStaff: true, canComment: false },
-    { slug: "daisuke", displayName: "Daisuke", isStaff: true, canComment: false },
-    { slug: "emi", displayName: "Emi", isStaff: false, canComment: true },
-    { slug: "fuji", displayName: "Fuji", isStaff: false, canComment: true }
+    { slug: "alice", displayName: "Alice", isStaff: true, canComment: true, avatarUrl: "/people/alice.svg" },
+    { slug: "ben", displayName: "Ben", isStaff: true, canComment: true, avatarUrl: "/people/ben.svg" },
+    { slug: "chloe", displayName: "Chloe", isStaff: true, canComment: false, avatarUrl: "/people/chloe.svg" },
+    { slug: "daisuke", displayName: "Daisuke", isStaff: true, canComment: false, avatarUrl: "/people/daisuke.svg" },
+    { slug: "emi", displayName: "Emi", isStaff: false, canComment: true, avatarUrl: "/people/emi.svg" },
+    { slug: "fuji", displayName: "Fuji", isStaff: false, canComment: true, avatarUrl: "/people/fuji.svg" }
   ];
   const people = await Promise.all(peopleRaw.map(p => prisma.person.create({ data: p })));
 
