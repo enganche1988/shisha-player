@@ -12,6 +12,7 @@ const SHOW_SCHEDULE_UI = false; // phase0': hide Today / schedule surfaces (keep
 type TodayInfo = { shop?: string; start?: string; end?: string };
 type PersonLite = { slug: string; displayName: string };
 type RecommendationLite = { id: string; body: string; fromPerson: PersonLite };
+type RecommendedMix = { by: string; mix: string; note?: string };
 
 function normalizeSlug(input: string | undefined) {
   return (input ?? "").trim().toLowerCase();
@@ -96,6 +97,14 @@ function fallbackDataFor(slug: string | undefined) {
   const image = fromList!.image;
   const today: TodayInfo = fromList?.today ?? { shop: "渋谷CHIC", start: "19:00", end: "23:00" };
   const instagramUrl = fromList?.instagramUrl ?? null;
+  const mixes: RecommendedMix[] =
+    s === "daigo"
+      ? [
+          { by: "Ben", mix: "Mint × Earl Grey", note: "輪郭を立てたい夜に。" },
+          { by: "Ben", mix: "Grapefruit × Jasmine", note: "軽く、静かに続く。" },
+          { by: "Ben", mix: "Rose × Black Tea" },
+        ]
+      : [];
   const abouts: RecommendationLite[] =
     s === "daigo"
       ? [
@@ -147,6 +156,7 @@ function fallbackDataFor(slug: string | undefined) {
       isStaff: true,
       canComment: true,
       image,
+      mixes,
       instagramUrl,
     },
     today,
@@ -235,6 +245,7 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
   }
   const data = await getPersonData(slug);
   const { person, today, abouts, bys } = data as any;
+  const mixes: RecommendedMix[] = Array.isArray((person as any)?.mixes) ? (person as any).mixes : [];
   const image = normalizePeopleImage(((person as any)?.avatarUrl ?? (person as any)?.image ?? (person as any)?.imageSrc ?? "_placeholder.svg") as string);
   const imageSrc = peopleImageSrc(image);
   const displayName =
@@ -270,6 +281,32 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
         <header className="mb-10">
           <h1 className="text-3xl font-semibold tracking-tight">{displayName}</h1>
         </header>
+
+        {/* Mixes */}
+        {mixes.length > 0 ? (
+          <section className="mb-12">
+            <h2 className="text-sm font-semibold text-zinc-400 mb-4">Mixes</h2>
+            <div className="divide-y divide-zinc-800/50">
+              {mixes.slice(0, 3).map((m, idx) => (
+                <div key={`${m.by}-${m.mix}-${idx}`} className="py-5">
+                  <div className="flex items-baseline justify-between gap-4">
+                    <div className="min-w-0 truncate text-base font-medium text-zinc-100">
+                      {m.mix}
+                    </div>
+                    <div className="whitespace-nowrap text-xs text-zinc-500">
+                      — {m.by}
+                    </div>
+                  </div>
+                  {m.note ? (
+                    <div className="mt-2 truncate text-xs text-zinc-500">
+                      {m.note}
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         {/* この人について (main) */}
         {abouts.length > 0 && (
