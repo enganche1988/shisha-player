@@ -4,6 +4,8 @@ export const revalidate = 0;
 import { getPrisma } from "@/lib/prisma";
 import { PicksHeroCards } from "./picks-hero.client";
 
+const USE_MOCK_FEATURED = true; // phase0: feature list is curated (no schedule / realtime)
+
 type PickRow = {
   slug: string;
   displayName: string;
@@ -28,6 +30,15 @@ type TodayRow = {
 };
 
 const fallbackPicks: PickRow[] = [
+  {
+    slug: "daigo",
+    displayName: "Daigo",
+    shop: "—",
+    start: "—",
+    end: "—",
+    imageSrc: "/people/daigo.jpg",
+    score: 110,
+  },
   {
     slug: "alice",
     displayName: "Alice",
@@ -86,6 +97,7 @@ const fallbackPicks: PickRow[] = [
 ];
 
 const fallbackTodayAll: TodayRow[] = [
+  { slug: "daigo", displayName: "Daigo", shop: "—", start: "—", end: "—", imageSrc: "/people/daigo.jpg" },
   // Shibuya
   { slug: "alice", displayName: "Alice", shop: "渋谷CHIC", start: "19:00", end: "23:00", imageSrc: "/people/alice.svg", lat: 35.658034, lng: 139.701636 },
   { slug: "emi", displayName: "Emi", shop: "渋谷CHIC", start: "18:30", end: "22:30", imageSrc: "/people/emi.svg", lat: 35.658034, lng: 139.701636 },
@@ -118,6 +130,7 @@ const fallbackTodayAll: TodayRow[] = [
 ];
 
 async function getTodaysPicks(): Promise<PickRow[]> {
+  if (USE_MOCK_FEATURED) return fallbackPicks;
   const prisma = getPrisma();
   if (!prisma) return fallbackPicks;
   try {
@@ -158,6 +171,7 @@ async function getTodaysPicks(): Promise<PickRow[]> {
 }
 
 async function getTodayAll(): Promise<TodayRow[]> {
+  if (USE_MOCK_FEATURED) return fallbackTodayAll;
   const prisma = getPrisma();
   if (!prisma) return fallbackTodayAll;
   try {

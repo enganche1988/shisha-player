@@ -125,7 +125,7 @@ export function PicksHeroCards({ picks, todayAll }: { picks: PickRow[]; todayAll
         {shown.map((p: any) => {
           return (
             <Link
-              key={`${p.slug}-${p.shop}-${p.start}`}
+              key={String(p.slug)}
               href={`/people/${p.slug}`}
               className="group relative overflow-hidden rounded-2xl border border-zinc-800/60 bg-zinc-950 shadow-[0_0_0_1px_rgba(0,0,0,0.2)]"
             >

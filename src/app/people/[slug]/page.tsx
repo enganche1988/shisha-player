@@ -54,6 +54,7 @@ const fallbackPeople: Array<{
   today?: TodayInfo;
   instagramUrl?: string;
 }> = [
+  { slug: "daigo", name: "Daigo", imageSrc: "/people/daigo.jpg", instagramUrl: "https://www.instagram.com/issho_daigo_bro?igsh=aWNrODY0bXdwOWtu" },
   { slug: "alice", name: "Alice", imageSrc: "/people/alice.svg", today: { shop: "渋谷CHIC", start: "19:00", end: "23:00" }, instagramUrl: "https://instagram.com/" },
   { slug: "ben", name: "Ben", imageSrc: "/people/ben.svg", today: { shop: "池袋Mellow", start: "20:00", end: "24:00" } },
   { slug: "chloe", name: "Chloe", imageSrc: "/people/chloe.svg", today: { shop: "吉祥寺Rest", start: "21:00", end: "24:00" } },
@@ -91,32 +92,42 @@ function fallbackDataFor(slug: string | undefined) {
   const imageSrc = fromList!.imageSrc;
   const today: TodayInfo = fromList?.today ?? { shop: "渋谷CHIC", start: "19:00", end: "23:00" };
   const instagramUrl = fromList?.instagramUrl ?? null;
-  const abouts: RecommendationLite[] = [
-    {
-      id: "r1",
-      body:
-        "香りの立ち上がりが静かで、輪郭が最後まで崩れない。混ぜ物を増やさずに深さだけを出せるタイプ。熱の扱いが上手く、同じ構成でも日によって“今日の一番”に寄せてくる。",
-      fromPerson: { slug: "ben", displayName: "Ben" },
-    },
-    {
-      id: "r2",
-      body:
-        "甘さを足さずに余韻を伸ばす。派手さではなく、吸い終わりの空気感まで設計している。初手が強いだけの人ではなく、後半の静けさが続く。",
-      fromPerson: { slug: "emi", displayName: "Emi" },
-    },
-    {
-      id: "r3",
-      body:
-        "香りの層が薄くならない。ベースが透明で、上に乗る要素が濁らない。雑に強くしない、弱くしない。手数ではなく制御で勝つ人。",
-      fromPerson: { slug: "fuji", displayName: "Fuji" },
-    },
-    {
-      id: "r4",
-      body:
-        "“上手い”の説明が要らないタイプ。こちらの気分に合わせて角度を変える。言葉より、仕上がりで黙らせてくる。",
-      fromPerson: { slug: "chloe", displayName: "Chloe" },
-    },
-  ];
+  const abouts: RecommendationLite[] =
+    s === "daigo"
+      ? [
+          {
+            id: "d1",
+            body:
+              "輪郭がはっきりしているのに、強く押しつけない。香りの立ち上がりから後半の余韻まで、空気の密度が一定で気持ちいい。派手さより、丁寧さで惹きつけるタイプ。",
+            fromPerson: { slug: "ben", displayName: "Ben" },
+          },
+        ]
+      : [
+          {
+            id: "r1",
+            body:
+              "香りの立ち上がりが静かで、輪郭が最後まで崩れない。混ぜ物を増やさずに深さだけを出せるタイプ。熱の扱いが上手く、同じ構成でも日によって“今日の一番”に寄せてくる。",
+            fromPerson: { slug: "ben", displayName: "Ben" },
+          },
+          {
+            id: "r2",
+            body:
+              "甘さを足さずに余韻を伸ばす。派手さではなく、吸い終わりの空気感まで設計している。初手が強いだけの人ではなく、後半の静けさが続く。",
+            fromPerson: { slug: "emi", displayName: "Emi" },
+          },
+          {
+            id: "r3",
+            body:
+              "香りの層が薄くならない。ベースが透明で、上に乗る要素が濁らない。雑に強くしない、弱くしない。手数ではなく制御で勝つ人。",
+            fromPerson: { slug: "fuji", displayName: "Fuji" },
+          },
+          {
+            id: "r4",
+            body:
+              "“上手い”の説明が要らないタイプ。こちらの気分に合わせて角度を変える。言葉より、仕上がりで黙らせてくる。",
+            fromPerson: { slug: "chloe", displayName: "Chloe" },
+          },
+        ];
   return {
     person: {
       name: displayName,
@@ -136,6 +147,7 @@ function fallbackDataFor(slug: string | undefined) {
 async function getPersonData(slug: string | undefined) {
   const prisma = getPrisma();
   if (!slug) return fallbackDataFor(slug);
+  if (normalizeSlug(slug) === "daigo") return fallbackDataFor(slug);
   if (!prisma) return fallbackDataFor(slug);
   try {
     const s = normalizeSlug(slug);
