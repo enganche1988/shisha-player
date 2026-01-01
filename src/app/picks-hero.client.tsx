@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { peopleImageSrc, normalizePeopleImage } from "@/lib/people-image";
+import { peopleImageSrc } from "@/lib/people-image";
 
 const SHOW_REALTIME_UI = false; // phase0': hide distance / nearby / status
 
@@ -132,7 +132,7 @@ export function PicksHeroCards({ picks, todayAll }: { picks: PickRow[]; todayAll
             >
               <div className="relative aspect-[16/10] md:aspect-[4/5]">
                 <Image
-                  src={peopleImageSrc(normalizePeopleImage(p.image))}
+                  src={peopleImageSrc(p.image)}
                   alt=""
                   fill
                   sizes="(max-width: 768px) 100vw, 33vw"

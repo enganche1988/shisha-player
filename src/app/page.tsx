@@ -37,7 +37,7 @@ const fallbackPicks: PickRow[] = [
     shop: "—",
     start: "—",
     end: "—",
-    image: "daigo.jpg",
+    image: "/photos/people/daigo.jpg",
     score: 110,
   },
   {
@@ -98,7 +98,7 @@ const fallbackPicks: PickRow[] = [
 ];
 
 const fallbackTodayAll: TodayRow[] = [
-  { slug: "daigo", displayName: "Daigo", shop: "—", start: "—", end: "—", image: "daigo.jpg" },
+  { slug: "daigo", displayName: "Daigo", shop: "—", start: "—", end: "—", image: "/photos/people/daigo.jpg" },
   // Shibuya
   { slug: "alice", displayName: "Alice", shop: "渋谷CHIC", start: "19:00", end: "23:00", image: "alice.svg", lat: 35.658034, lng: 139.701636 },
   { slug: "emi", displayName: "Emi", shop: "渋谷CHIC", start: "18:30", end: "22:30", image: "emi.svg", lat: 35.658034, lng: 139.701636 },

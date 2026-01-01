@@ -55,7 +55,7 @@ const fallbackPeople: Array<{
   today?: TodayInfo;
   instagramUrl?: string;
 }> = [
-  { slug: "daigo", name: "Daigo", image: "daigo.jpg", instagramUrl: "https://www.instagram.com/issho_daigo_bro?igsh=aWNrODY0bXdwOWtu" },
+  { slug: "daigo", name: "Daigo", image: "/photos/people/daigo.jpg", instagramUrl: "https://www.instagram.com/issho_daigo_bro?igsh=aWNrODY0bXdwOWtu" },
   { slug: "alice", name: "Alice", image: "alice.svg", today: { shop: "渋谷CHIC", start: "19:00", end: "23:00" }, instagramUrl: "https://instagram.com/" },
   { slug: "ben", name: "Ben", image: "ben.svg", today: { shop: "池袋Mellow", start: "20:00", end: "24:00" } },
   { slug: "chloe", name: "Chloe", image: "chloe.svg", today: { shop: "吉祥寺Rest", start: "21:00", end: "24:00" } },
