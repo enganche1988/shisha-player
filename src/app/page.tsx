@@ -228,21 +228,23 @@ export default async function HomePage() {
     <main className="bg-black text-white overflow-x-hidden">
       <section className="relative min-h-[100svh] overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-zinc-950 via-black to-black" />
-        <div className="absolute -left-28 -top-28 h-[28rem] w-[28rem] rounded-full bg-zinc-800/25 blur-3xl" />
-        <div className="absolute -right-40 top-10 h-[34rem] w-[34rem] rounded-full bg-zinc-700/15 blur-3xl" />
-        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black to-transparent" />
+        {/* smoky quiet backdrop (no imagery, just light) */}
+        <div className="absolute -left-32 -top-40 h-[34rem] w-[34rem] rounded-full bg-slate-700/20 blur-3xl" />
+        <div className="absolute -right-40 -top-10 h-[40rem] w-[40rem] rounded-full bg-sky-900/25 blur-3xl" />
+        <div className="absolute left-1/3 top-1/3 h-[28rem] w-[28rem] rounded-full bg-indigo-950/30 blur-3xl" />
+        <div className="absolute inset-0 bg-black/35" />
 
         <div className="relative mx-auto flex min-h-[100svh] w-full max-w-7xl flex-col px-5 pt-7 pb-6 md:px-10 md:pt-10 md:pb-8">
           <div className="min-w-0">
-            <h1 className="text-[34px] font-semibold leading-[1.1] tracking-tight text-zinc-100 md:text-[52px]">
-              この人のシーシャを知る。
+            <h1 className="font-serif text-[40px] font-medium leading-[1.05] tracking-tight text-zinc-100 md:text-[64px]">
+              Packerを探す
             </h1>
-            <p className="mt-4 max-w-[28rem] text-sm text-zinc-400 md:text-base">
+            <p className="mt-5 max-w-[28rem] text-base text-zinc-300/80 md:text-lg">
               店ではなく、作る人で選ぶ。
             </p>
           </div>
 
-          <div className="mt-7 flex-1 md:mt-8">
+          <div className="mt-10 flex-1 md:mt-12">
             <PicksHeroCards picks={picks} todayAll={todayAll} />
           </div>
         </div>

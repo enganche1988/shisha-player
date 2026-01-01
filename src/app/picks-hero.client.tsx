@@ -121,38 +121,35 @@ export function PicksHeroCards({ picks, todayAll }: { picks: PickRow[]; todayAll
   const shown = computed.slice(0, Math.min(visibleCount, 20));
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-3 md:px-10">
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
+    <div className="mx-auto w-full max-w-7xl px-4 md:px-10">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-14">
         {shown.map((p: any) => {
           return (
             <Link
               key={String(p.slug)}
               href={`/people/${p.slug}`}
-              className="group relative overflow-hidden rounded-2xl border border-zinc-800/60 bg-zinc-950 shadow-[0_0_0_1px_rgba(0,0,0,0.2)]"
+              className="group relative overflow-hidden rounded-2xl bg-black/10"
             >
-              <div className="relative aspect-[16/10] md:aspect-[4/5]">
+              <div className="relative aspect-[3/4]">
                 <Image
                   src={peopleImageSrc(p.image)}
                   alt=""
                   fill
                   sizes="(max-width: 768px) 100vw, 33vw"
-                  className="object-cover object-center"
+                  className="object-cover object-center grayscale"
                   priority={false}
                   unoptimized
                 />
 
-                {/* dark overlay for quiet tone + text readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/45 to-black/20" />
-                <div className="absolute inset-0 bg-black/20" />
+                {/* dark overlay for quiet tone */}
+                <div className="absolute inset-0 bg-black/35" />
+                <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
 
-                <div className="absolute inset-x-0 bottom-0 p-4">
-                  <div className="text-[22px] font-semibold leading-tight tracking-tight text-zinc-100 md:text-[26px]">
+                {/* name pill */}
+                <div className="absolute bottom-6 left-6">
+                  <span className="inline-flex items-center rounded-full border border-white/10 bg-white/10 px-7 py-3 text-[28px] font-semibold tracking-wide text-zinc-100/90 backdrop-blur-sm">
                     {p.displayName}
-                  </div>
-                </div>
-
-                <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                  <div className="absolute inset-0 bg-white/5" />
+                  </span>
                 </div>
               </div>
             </Link>
