@@ -325,12 +325,15 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
         {/* By recommender (3rd person) */}
         {grouped.length > 0 ? (
           <section className="mb-12">
-            <div className="divide-y divide-zinc-800/60">
-              {grouped.map((g) => {
+            <div>
+              {grouped.map((g, idx) => {
                 const mixesTop = g.mixes.slice(0, 3);
                 const voicesTop = g.voices.slice(0, 3);
                 return (
-                  <div key={g.key} className="py-10">
+                  <div
+                    key={g.key}
+                    className={`border-y border-zinc-800/60 py-10 ${idx === 0 ? "" : "-mt-px"}`}
+                  >
                     <div className="text-sm font-semibold text-zinc-300">
                       From{" "}
                       {g.slug ? (
@@ -348,18 +351,18 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
                     {mixesTop.length > 0 ? (
                       <div className="mt-6">
                         <div className="text-xs text-zinc-500">Mix</div>
-                        <div className="mt-3 divide-y divide-zinc-800/50">
-                          {mixesTop.map((m, idx) => (
-                            <div key={`${g.key}-mix-${m.mix}-${idx}`} className="py-4">
+                        <ul className="mt-4 space-y-3">
+                          {mixesTop.map((m, mixIdx) => (
+                            <li key={`${g.key}-mix-${m.mix}-${mixIdx}`} className="min-w-0">
                               <div className="text-base font-medium text-zinc-100">{m.mix}</div>
                               {m.note ? (
-                                <div className="mt-2 text-xs text-zinc-500 line-clamp-1">
+                                <div className="mt-1 text-xs text-zinc-500 line-clamp-1">
                                   {m.note}
                                 </div>
                               ) : null}
-                            </div>
+                            </li>
                           ))}
-                        </div>
+                        </ul>
                       </div>
                     ) : null}
 
@@ -368,11 +371,12 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
                         <div className="text-xs text-zinc-500">Voice</div>
                         <div className="mt-4 space-y-8">
                           {voicesTop.map((rec: any) => (
-                            <div key={`${g.key}-voice-${rec.id}`}>
-                              <p className="whitespace-pre-wrap leading-8 text-zinc-200">
-                                {rec.body}
-                              </p>
-                            </div>
+                            <p
+                              key={`${g.key}-voice-${rec.id}`}
+                              className="whitespace-pre-wrap leading-8 text-zinc-200"
+                            >
+                              {rec.body}
+                            </p>
                           ))}
                         </div>
                       </div>
