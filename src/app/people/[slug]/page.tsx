@@ -11,7 +11,6 @@ const SHOW_SCHEDULE_UI = false; // phase0': hide Today / schedule surfaces (keep
 
 type TodayInfo = { shop?: string; start?: string; end?: string };
 type PersonLite = { slug: string; displayName: string };
-type RecommendationLite = { id: string; body: string; fromPerson: PersonLite };
 type RecommendedMix = { by: string; mix: string; note?: string };
 
 function normalizeSlug(input: string | undefined) {
@@ -119,51 +118,6 @@ function fallbackDataFor(slug: string | undefined) {
           { by: "Ben", mix: "Rose × Black Tea" },
         ]
       : [];
-  const abouts: RecommendationLite[] =
-    s === "daigo"
-      ? [
-          {
-            id: "d1",
-            body:
-              "輪郭がはっきりしているのに、強く押しつけない。香りの立ち上がりから後半の余韻まで、空気の密度が一定で気持ちいい。派手さより、丁寧さで惹きつけるタイプ。",
-            fromPerson: { slug: "ben", displayName: "Ben" },
-          },
-        ]
-      : s === "tachiuo"
-      ? [
-          {
-            id: "t1",
-            body:
-              "香りの輪郭が澄んでいて、余韻が静かに続く。派手に盛らず、最初から最後まで温度と空気感を揃えてくる。こちらのテンポに合わせてくれる人。",
-            fromPerson: { slug: "ben", displayName: "Ben" },
-          },
-        ]
-      : [
-          {
-            id: "r1",
-            body:
-              "香りの立ち上がりが静かで、輪郭が最後まで崩れない。混ぜ物を増やさずに深さだけを出せるタイプ。熱の扱いが上手く、同じ構成でも日によって“今日の一番”に寄せてくる。",
-            fromPerson: { slug: "ben", displayName: "Ben" },
-          },
-          {
-            id: "r2",
-            body:
-              "甘さを足さずに余韻を伸ばす。派手さではなく、吸い終わりの空気感まで設計している。初手が強いだけの人ではなく、後半の静けさが続く。",
-            fromPerson: { slug: "emi", displayName: "Emi" },
-          },
-          {
-            id: "r3",
-            body:
-              "香りの層が薄くならない。ベースが透明で、上に乗る要素が濁らない。雑に強くしない、弱くしない。手数ではなく制御で勝つ人。",
-            fromPerson: { slug: "fuji", displayName: "Fuji" },
-          },
-          {
-            id: "r4",
-            body:
-              "“上手い”の説明が要らないタイプ。こちらの気分に合わせて角度を変える。言葉より、仕上がりで黙らせてくる。",
-            fromPerson: { slug: "chloe", displayName: "Chloe" },
-          },
-        ];
   return {
     person: {
       name: displayName,
@@ -174,7 +128,6 @@ function fallbackDataFor(slug: string | undefined) {
       instagramUrl,
     },
     today,
-    abouts,
     bys: [
       { id: "to1", toPerson: { slug: "ben", displayName: "Ben" } }
     ]
@@ -192,23 +145,6 @@ async function getPersonData(slug: string | undefined) {
       where: { slug: { equals: s, mode: "insensitive" } },
     });
     if (!person) return fallbackDataFor(slug);
-
-    const aboutsRaw = await prisma.recommendation.findMany({
-      where: { toPersonId: person.id, isApproved: true },
-      include: { fromPerson: true },
-      orderBy: [{ createdAt: "desc" }]
-    });
-    const abouts = await Promise.all(
-      aboutsRaw.map(async rec => ({
-        ...rec,
-        fromPersonReceivedCount: await prisma.recommendation.count({ where: { toPersonId: rec.fromPersonId, isApproved: true } })
-      }))
-    );
-    abouts.sort((a, b) =>
-      b.fromPersonReceivedCount - a.fromPersonReceivedCount ||
-      b.createdAt.getTime() - a.createdAt.getTime()
-    );
-    const aboutsTop = abouts.filter(Boolean).slice(0, 5);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -243,7 +179,7 @@ async function getPersonData(slug: string | undefined) {
         }
       : undefined;
 
-    return { person, today: todayInfo, abouts: aboutsTop, bys };
+    return { person, today: todayInfo, bys };
   } catch {
     return fallbackDataFor(slug);
   }
@@ -258,7 +194,7 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
     notFound();
   }
   const data = await getPersonData(slug);
-  const { person, today, abouts, bys } = data as any;
+  const { person, today, bys } = data as any;
   const mixes: RecommendedMix[] = Array.isArray((person as any)?.mixes) ? (person as any).mixes : [];
   const image = normalizePeopleImage(((person as any)?.avatarUrl ?? (person as any)?.image ?? (person as any)?.imageSrc ?? "_placeholder.svg") as string);
   const imageSrc = peopleImageSrc(image);
@@ -277,21 +213,13 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
   const grouped = (() => {
     const map = new Map<
       string,
-      { key: string; name: string; slug?: string; mixes: RecommendedMix[]; voices: RecommendationLite[] }
+      { key: string; name: string; slug?: string; mixes: RecommendedMix[] }
     >();
-
-    for (const rec of (Array.isArray(abouts) ? abouts : []) as RecommendationLite[]) {
-      const k = keyForPerson(rec?.fromPerson);
-      const name = rec?.fromPerson?.displayName ?? "—";
-      const slug = rec?.fromPerson?.slug;
-      if (!map.has(k)) map.set(k, { key: k, name, slug, mixes: [], voices: [] });
-      map.get(k)!.voices.push(rec);
-    }
 
     for (const m of mixes) {
       const k = keyForMix(m);
       const name = m.by || "—";
-      if (!map.has(k)) map.set(k, { key: k, name, mixes: [], voices: [] });
+      if (!map.has(k)) map.set(k, { key: k, name, mixes: [] });
       const entry = map.get(k)!;
       // if we only have mixes, try to resolve slug for linking (best-effort)
       if (!entry.slug) {
@@ -303,8 +231,7 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
       entry.mixes.push(m);
     }
 
-    // stable order: keep the strongest "voices" first, then mixes-only
-    return [...map.values()].sort((a, b) => (b.voices.length - a.voices.length) || a.name.localeCompare(b.name));
+    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
   })();
 
   return (
@@ -336,13 +263,13 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
             <div className="space-y-10">
               {grouped.map((g) => {
                 const mixesTop = g.mixes.slice(0, 3);
-                const voicesTop = g.voices.slice(0, 3);
                 return (
                   <div
                     key={g.key}
                     className="rounded-lg border border-white/10 p-6 md:p-8"
                   >
                     <div className="text-base font-semibold tracking-tight text-zinc-200">
+                      From{" "}
                       {g.slug ? (
                         <a
                           href={`/people/${g.slug}`}
@@ -367,21 +294,6 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
                                   {m.note}
                                 </div>
                               ) : null}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-
-                    {voicesTop.length > 0 ? (
-                      <div className="mt-10">
-                        <div className="text-xs text-zinc-500">Comment</div>
-                        <div className="mt-4 space-y-8">
-                          {voicesTop.map((rec: any) => (
-                            <div key={`${g.key}-voice-${rec.id}`}>
-                              <p className="whitespace-pre-wrap leading-8 text-zinc-200">
-                                {rec.body}
-                              </p>
                             </div>
                           ))}
                         </div>
