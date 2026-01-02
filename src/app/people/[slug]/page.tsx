@@ -11,7 +11,8 @@ const SHOW_SCHEDULE_UI = false; // phase0': hide Today / schedule surfaces (keep
 
 type TodayInfo = { shop?: string; start?: string; end?: string };
 type PersonLite = { slug: string; displayName: string };
-type RecommendedMix = { by: string; mix: string; note?: string };
+type RecommendationLite = { id: string; body: string; fromPerson: PersonLite };
+type RecommendedMix = { by: string; mix: string };
 
 function normalizeSlug(input: string | undefined) {
   return (input ?? "").trim().toLowerCase();
@@ -113,9 +114,29 @@ function fallbackDataFor(slug: string | undefined) {
   const mixes: RecommendedMix[] =
     s === "daigo"
       ? [
-          { by: "Ben", mix: "Mint × Earl Grey", note: "輪郭を立てたい夜に。" },
-          { by: "Ben", mix: "Grapefruit × Jasmine", note: "軽く、静かに続く。" },
+          { by: "Ben", mix: "Mint × Earl Grey" },
+          { by: "Ben", mix: "Grapefruit × Jasmine" },
           { by: "Ben", mix: "Rose × Black Tea" },
+        ]
+      : [];
+  const abouts: RecommendationLite[] =
+    s === "daigo"
+      ? [
+          {
+            id: "d1",
+            body:
+              "輪郭がはっきりしているのに、強く押しつけない。香りの立ち上がりから後半の余韻まで、空気の密度が一定で気持ちいい。派手さより、丁寧さで惹きつけるタイプ。",
+            fromPerson: { slug: "ben", displayName: "Ben" },
+          },
+        ]
+      : s === "tachiuo"
+      ? [
+          {
+            id: "t1",
+            body:
+              "香りの輪郭が澄んでいて、余韻が静かに続く。派手に盛らず、最初から最後まで温度と空気感を揃えてくる。こちらのテンポに合わせてくれる人。",
+            fromPerson: { slug: "ben", displayName: "Ben" },
+          },
         ]
       : [];
   return {
@@ -128,6 +149,7 @@ function fallbackDataFor(slug: string | undefined) {
       instagramUrl,
     },
     today,
+    abouts,
     bys: [
       { id: "to1", toPerson: { slug: "ben", displayName: "Ben" } }
     ]
@@ -145,6 +167,22 @@ async function getPersonData(slug: string | undefined) {
       where: { slug: { equals: s, mode: "insensitive" } },
     });
     if (!person) return fallbackDataFor(slug);
+
+    // phase0': keep "person evaluation comments" (3rd person). Mix notes are not used.
+    const aboutsRaw = await prisma.recommendation.findMany({
+      where: { toPersonId: person.id, isApproved: true },
+      include: { fromPerson: true },
+      orderBy: [{ createdAt: "desc" }],
+      take: 10,
+    });
+    const aboutsTop = aboutsRaw
+      .filter(Boolean)
+      .slice(0, 5)
+      .map((rec) => ({
+        id: rec.id,
+        body: rec.body,
+        fromPerson: { slug: rec.fromPerson.slug, displayName: rec.fromPerson.displayName },
+      })) satisfies RecommendationLite[];
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -179,7 +217,7 @@ async function getPersonData(slug: string | undefined) {
         }
       : undefined;
 
-    return { person, today: todayInfo, bys };
+    return { person, today: todayInfo, abouts: aboutsTop, bys };
   } catch {
     return fallbackDataFor(slug);
   }
@@ -194,7 +232,7 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
     notFound();
   }
   const data = await getPersonData(slug);
-  const { person, today, bys } = data as any;
+  const { person, today, abouts, bys } = data as any;
   const mixes: RecommendedMix[] = Array.isArray((person as any)?.mixes) ? (person as any).mixes : [];
   const image = normalizePeopleImage(((person as any)?.avatarUrl ?? (person as any)?.image ?? (person as any)?.imageSrc ?? "_placeholder.svg") as string);
   const imageSrc = peopleImageSrc(image);
@@ -213,13 +251,21 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
   const grouped = (() => {
     const map = new Map<
       string,
-      { key: string; name: string; slug?: string; mixes: RecommendedMix[] }
+      { key: string; name: string; slug?: string; mixes: RecommendedMix[]; voices: RecommendationLite[] }
     >();
+
+    for (const rec of (Array.isArray(abouts) ? abouts : []) as RecommendationLite[]) {
+      const k = keyForPerson(rec?.fromPerson);
+      const name = rec?.fromPerson?.displayName ?? "—";
+      const slug = rec?.fromPerson?.slug;
+      if (!map.has(k)) map.set(k, { key: k, name, slug, mixes: [], voices: [] });
+      map.get(k)!.voices.push(rec);
+    }
 
     for (const m of mixes) {
       const k = keyForMix(m);
       const name = m.by || "—";
-      if (!map.has(k)) map.set(k, { key: k, name, mixes: [] });
+      if (!map.has(k)) map.set(k, { key: k, name, mixes: [], voices: [] });
       const entry = map.get(k)!;
       // if we only have mixes, try to resolve slug for linking (best-effort)
       if (!entry.slug) {
@@ -231,7 +277,8 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
       entry.mixes.push(m);
     }
 
-    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
+    // stable order: comments first (strongest signal), then mixes-only
+    return [...map.values()].sort((a, b) => (b.voices.length - a.voices.length) || a.name.localeCompare(b.name));
   })();
 
   return (
@@ -281,19 +328,30 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
                         <span>{g.name}</span>
                       )}
                     </div>
+                    <div className="mt-4 border-t border-white/10" />
+
+                    {g.voices.length > 0 ? (
+                      <div className="mt-8">
+                        <div className="text-xs text-zinc-500">Comment</div>
+                        <div className="mt-4 space-y-8">
+                          {g.voices.slice(0, 2).map((rec) => (
+                            <div key={`${g.key}-comment-${rec.id}`}>
+                              <p className="whitespace-pre-wrap leading-8 text-zinc-200">
+                                {rec.body}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
 
                     {mixesTop.length > 0 ? (
-                      <div className="mt-6">
-                        <div className="text-xs text-zinc-500">Mix</div>
-                        <div className="mt-3 space-y-5">
+                      <div className="mt-10">
+                        <div className="text-xs text-zinc-500">Recommended Mixes</div>
+                        <div className="mt-4 space-y-5">
                           {mixesTop.map((m, idx) => (
                             <div key={`${g.key}-mix-${m.mix}-${idx}`}>
                               <div className="text-base font-medium text-zinc-100">{m.mix}</div>
-                              {m.note ? (
-                                <div className="mt-2 text-xs text-zinc-500 line-clamp-1">
-                                  {m.note}
-                                </div>
-                              ) : null}
                             </div>
                           ))}
                         </div>
