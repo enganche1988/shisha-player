@@ -227,12 +227,20 @@ export default async function HomePage() {
   return (
     <main className="bg-black text-white overflow-x-hidden">
       <section className="relative min-h-[100svh] overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-zinc-950 via-black to-black" />
+        {/* background image (air layer) */}
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-30 saturate-0 sm:opacity-35 sm:blur-[1px] md:blur-[2px]"
+          style={{ backgroundImage: "url(/photos/bg/shisha-smoke.jpg)" }}
+          aria-hidden="true"
+        />
+        {/* dark overlay for readability (must win over background) */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/65 to-black/85" />
+
         {/* smoky quiet backdrop (no imagery, just light) */}
         <div className="absolute -left-32 -top-40 h-[34rem] w-[34rem] rounded-full bg-slate-700/20 blur-3xl" />
         <div className="absolute -right-40 -top-10 h-[40rem] w-[40rem] rounded-full bg-sky-900/25 blur-3xl" />
         <div className="absolute left-1/3 top-1/3 h-[28rem] w-[28rem] rounded-full bg-indigo-950/30 blur-3xl" />
-        <div className="absolute inset-0 bg-black/35" />
+        <div className="absolute inset-0 bg-black/25" />
 
         <div className="relative mx-auto flex min-h-[100svh] w-full max-w-7xl flex-col px-5 pt-7 pb-6 md:px-10 md:pt-10 md:pb-8">
           <div className="min-w-0">
