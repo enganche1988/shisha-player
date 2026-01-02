@@ -227,29 +227,33 @@ export default async function HomePage() {
   return (
     <main className="bg-black text-white overflow-x-hidden">
       <section className="relative min-h-[100svh] overflow-hidden">
-        {/* background image (air layer) */}
+        {/* background (no overlay): fixed + cover + center */}
         <div
-          className="absolute inset-0 bg-cover bg-center opacity-30 saturate-0 sm:opacity-35 sm:blur-[1px] md:blur-[2px]"
-          style={{ backgroundImage: "url(/photos/bg/shisha-smoke.jpg)" }}
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: "url(/photos/bg/shisha-smoke.jpg)",
+            backgroundAttachment: "fixed",
+          }}
           aria-hidden="true"
         />
-        {/* dark overlay for readability (must win over background) */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/65 to-black/85" />
-
-        {/* smoky quiet backdrop (no imagery, just light) */}
-        <div className="absolute -left-32 -top-40 h-[34rem] w-[34rem] rounded-full bg-slate-700/20 blur-3xl" />
-        <div className="absolute -right-40 -top-10 h-[40rem] w-[40rem] rounded-full bg-sky-900/25 blur-3xl" />
-        <div className="absolute left-1/3 top-1/3 h-[28rem] w-[28rem] rounded-full bg-indigo-950/30 blur-3xl" />
-        <div className="absolute inset-0 bg-black/25" />
 
         <div className="relative mx-auto flex min-h-[100svh] w-full max-w-7xl flex-col px-5 pt-7 pb-6 md:px-10 md:pt-10 md:pb-8">
           <div className="min-w-0">
-            <h1 className="font-serif text-[36px] font-medium leading-[1.05] tracking-tight text-zinc-100 md:text-[64px]">
+            {/* title glass plate (only around text, not full page) */}
+            <div className="inline-block rounded-xl border border-white/10 bg-black/25 px-4 py-3 backdrop-blur-md md:px-6 md:py-4">
+            <h1
+              className="font-serif text-[36px] font-medium leading-[1.05] tracking-tight text-zinc-100 md:text-[64px]"
+              style={{ textShadow: "0 2px 16px rgba(0,0,0,0.65), 0 1px 2px rgba(0,0,0,0.85)" }}
+            >
               Packerを探す
             </h1>
-            <p className="mt-4 max-w-[28rem] text-sm text-zinc-300/80 md:text-lg">
+            <p
+              className="mt-4 max-w-[28rem] text-sm text-zinc-200/90 md:text-lg"
+              style={{ textShadow: "0 2px 14px rgba(0,0,0,0.65), 0 1px 2px rgba(0,0,0,0.85)" }}
+            >
               店ではなく、作る人で選ぶ。
             </p>
+            </div>
           </div>
 
           <div className="mt-6 flex-1 md:mt-12">
