@@ -12,7 +12,7 @@ const SHOW_SCHEDULE_UI = false; // phase0': hide Today / schedule surfaces (keep
 type TodayInfo = { shop?: string; start?: string; end?: string };
 type PersonLite = { slug: string; displayName: string };
 type RecommendationLite = { id: string; body: string; fromPerson: PersonLite };
-type RecommendedMix = { by: string; mix: string };
+type RecommendedFlavor = { by: string; flavors: string; comment?: string };
 
 function normalizeSlug(input: string | undefined) {
   return (input ?? "").trim().toLowerCase();
@@ -26,8 +26,8 @@ function keyForPerson(p: { slug?: string; displayName?: string } | null | undefi
   return "unknown";
 }
 
-function keyForMix(m: RecommendedMix | null | undefined) {
-  const n = String(m?.by ?? "").trim().toLowerCase();
+function keyForFlavor(f: RecommendedFlavor | null | undefined) {
+  const n = String(f?.by ?? "").trim().toLowerCase();
   if (n) return `name:${n}`;
   return "unknown";
 }
@@ -111,12 +111,12 @@ function fallbackDataFor(slug: string | undefined) {
   const image = fromList!.image;
   const today: TodayInfo = fromList?.today ?? { shop: "渋谷CHIC", start: "19:00", end: "23:00" };
   const instagramUrl = fromList?.instagramUrl ?? null;
-  const mixes: RecommendedMix[] =
+  const recommendedFlavors: RecommendedFlavor[] =
     s === "daigo"
       ? [
-          { by: "Ben", mix: "Mint × Earl Grey" },
-          { by: "Ben", mix: "Grapefruit × Jasmine" },
-          { by: "Ben", mix: "Rose × Black Tea" },
+          { by: "Tachiuo", flavors: "Mint × Earl Grey", comment: "清涼感と深みのバランスが良い" },
+          { by: "Tachiuo", flavors: "Grapefruit × Jasmine" },
+          { by: "Tachiuo", flavors: "Rose × Black Tea", comment: "華やかで余韻が長い" },
         ]
       : [];
   const abouts: RecommendationLite[] =
@@ -145,7 +145,7 @@ function fallbackDataFor(slug: string | undefined) {
       isStaff: true,
       canComment: true,
       image,
-      mixes,
+      recommendedFlavors,
       instagramUrl,
     },
     today,
@@ -233,7 +233,7 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
   }
   const data = await getPersonData(slug);
   const { person, today, abouts, bys } = data as any;
-  const mixes: RecommendedMix[] = Array.isArray((person as any)?.mixes) ? (person as any).mixes : [];
+  const recommendedFlavors: RecommendedFlavor[] = Array.isArray((person as any)?.recommendedFlavors) ? (person as any).recommendedFlavors : [];
   const image = normalizePeopleImage(((person as any)?.avatarUrl ?? (person as any)?.image ?? (person as any)?.imageSrc ?? "_placeholder.svg") as string);
   const imageSrc = peopleImageSrc(image);
   const displayName =
@@ -251,33 +251,33 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
   const grouped = (() => {
     const map = new Map<
       string,
-      { key: string; name: string; slug?: string; mixes: RecommendedMix[]; voices: RecommendationLite[] }
+      { key: string; name: string; slug?: string; flavors: RecommendedFlavor[]; voices: RecommendationLite[] }
     >();
 
     for (const rec of (Array.isArray(abouts) ? abouts : []) as RecommendationLite[]) {
       const k = keyForPerson(rec?.fromPerson);
       const name = rec?.fromPerson?.displayName ?? "—";
       const slug = rec?.fromPerson?.slug;
-      if (!map.has(k)) map.set(k, { key: k, name, slug, mixes: [], voices: [] });
+      if (!map.has(k)) map.set(k, { key: k, name, slug, flavors: [], voices: [] });
       map.get(k)!.voices.push(rec);
     }
 
-    for (const m of mixes) {
-      const k = keyForMix(m);
-      const name = m.by || "—";
-      if (!map.has(k)) map.set(k, { key: k, name, mixes: [], voices: [] });
+    for (const f of recommendedFlavors) {
+      const k = keyForFlavor(f);
+      const name = f.by || "—";
+      if (!map.has(k)) map.set(k, { key: k, name, flavors: [], voices: [] });
       const entry = map.get(k)!;
-      // if we only have mixes, try to resolve slug for linking (best-effort)
+      // if we only have flavors, try to resolve slug for linking (best-effort)
       if (!entry.slug) {
         const fromFallback = fallbackPeople.find(
           (p) => String(p?.name ?? "").trim().toLowerCase() === String(name ?? "").trim().toLowerCase()
         );
         if (fromFallback?.slug) entry.slug = fromFallback.slug;
       }
-      entry.mixes.push(m);
+      entry.flavors.push(f);
     }
 
-    // stable order: comments first (strongest signal), then mixes-only
+    // stable order: comments first (strongest signal), then flavors-only
     return [...map.values()].sort((a, b) => (b.voices.length - a.voices.length) || a.name.localeCompare(b.name));
   })();
 
@@ -309,7 +309,7 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
           <section className="mb-12">
             <div className="space-y-10">
               {grouped.map((g) => {
-                const mixesTop = g.mixes.slice(0, 3);
+                const flavorsTop = g.flavors.slice(0, 5);
                 return (
                   <div
                     key={g.key}
@@ -345,13 +345,18 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
                       </div>
                     ) : null}
 
-                    {mixesTop.length > 0 ? (
+                    {flavorsTop.length > 0 ? (
                       <div className="mt-10">
-                        <div className="text-xs text-zinc-500">Recommended Mixes</div>
+                        <div className="text-xs text-zinc-500">Recommended Flavors</div>
                         <div className="mt-4 space-y-5">
-                          {mixesTop.map((m, idx) => (
-                            <div key={`${g.key}-mix-${m.mix}-${idx}`}>
-                              <div className="text-base font-medium text-zinc-100">{m.mix}</div>
+                          {flavorsTop.map((f, idx) => (
+                            <div key={`${g.key}-flavor-${f.flavors}-${idx}`}>
+                              <div className="text-base font-medium text-zinc-100">{f.flavors}</div>
+                              {f.comment ? (
+                                <div className="mt-2 text-sm text-zinc-400 leading-relaxed">
+                                  {f.comment}
+                                </div>
+                              ) : null}
                             </div>
                           ))}
                         </div>
