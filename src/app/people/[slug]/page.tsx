@@ -251,28 +251,33 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
   const grouped = (() => {
     const map = new Map<
       string,
-      { key: string; name: string; slug?: string; flavors: RecommendedFlavor[]; voices: RecommendationLite[] }
+      { key: string; name: string; slug?: string; image?: string; flavors: RecommendedFlavor[]; voices: RecommendationLite[] }
     >();
 
     for (const rec of (Array.isArray(abouts) ? abouts : []) as RecommendationLite[]) {
       const k = keyForPerson(rec?.fromPerson);
       const name = rec?.fromPerson?.displayName ?? "—";
       const slug = rec?.fromPerson?.slug;
-      if (!map.has(k)) map.set(k, { key: k, name, slug, flavors: [], voices: [] });
+      const fromFallback = slug ? fallbackPeople.find(p => p.slug === slug) : undefined;
+      const image = fromFallback?.image;
+      if (!map.has(k)) map.set(k, { key: k, name, slug, image, flavors: [], voices: [] });
       map.get(k)!.voices.push(rec);
     }
 
     for (const f of recommendedFlavors) {
       const k = keyForFlavor(f);
       const name = f.by || "—";
-      if (!map.has(k)) map.set(k, { key: k, name, flavors: [], voices: [] });
+      if (!map.has(k)) map.set(k, { key: k, name, image: undefined, flavors: [], voices: [] });
       const entry = map.get(k)!;
       // if we only have flavors, try to resolve slug for linking (best-effort)
       if (!entry.slug) {
         const fromFallback = fallbackPeople.find(
           (p) => String(p?.name ?? "").trim().toLowerCase() === String(name ?? "").trim().toLowerCase()
         );
-        if (fromFallback?.slug) entry.slug = fromFallback.slug;
+        if (fromFallback?.slug) {
+          entry.slug = fromFallback.slug;
+          entry.image = fromFallback.image;
+        }
       }
       entry.flavors.push(f);
     }
@@ -310,23 +315,39 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
             <div className="space-y-10">
               {grouped.map((g) => {
                 const flavorsTop = g.flavors.slice(0, 5);
+                const recommenderImage = g.image ? normalizePeopleImage(g.image) : null;
+                const recommenderImageSrc = recommenderImage ? peopleImageSrc(recommenderImage) : null;
                 return (
                   <div
                     key={g.key}
                     className="rounded-lg border border-white/10 p-6 md:p-8"
                   >
-                    <div className="text-base font-semibold tracking-tight text-zinc-200">
-                      From{" "}
-                      {g.slug ? (
-                        <a
-                          href={`/people/${g.slug}`}
-                          className="hover:underline underline-offset-4 decoration-zinc-700/70"
-                        >
-                          {g.name}
-                        </a>
-                      ) : (
-                        <span>{g.name}</span>
-                      )}
+                    <div className="flex items-center gap-3">
+                      {recommenderImageSrc ? (
+                        <div className="relative h-6 w-6 flex-shrink-0 overflow-hidden rounded-full border border-white/5">
+                          <Image
+                            src={recommenderImageSrc}
+                            alt=""
+                            fill
+                            sizes="24px"
+                            className="object-cover opacity-60 grayscale"
+                            unoptimized
+                          />
+                        </div>
+                      ) : null}
+                      <div className="text-base font-semibold tracking-tight text-zinc-200">
+                        From{" "}
+                        {g.slug ? (
+                          <a
+                            href={`/people/${g.slug}`}
+                            className="hover:underline underline-offset-4 decoration-zinc-700/70"
+                          >
+                            {g.name}
+                          </a>
+                        ) : (
+                          <span>{g.name}</span>
+                        )}
+                      </div>
                     </div>
                     <div className="mt-4 border-t border-white/10" />
 
