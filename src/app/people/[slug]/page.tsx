@@ -114,9 +114,9 @@ function fallbackDataFor(slug: string | undefined) {
   const recommendedFlavors: RecommendedFlavor[] =
     s === "daigo"
       ? [
-          { by: "Tachiuo", flavors: "Mint × Earl Grey", comment: "清涼感と深みのバランスが良い" },
-          { by: "Tachiuo", flavors: "Grapefruit × Jasmine" },
-          { by: "Tachiuo", flavors: "Rose × Black Tea", comment: "華やかで余韻が長い" },
+          { by: "Tachiuo", flavors: "Dogma no aroma" },
+          { by: "Tachiuo", flavors: "Satyr no aroma" },
+          { by: "Tachiuo", flavors: "Trofimoff's no aroma" },
         ]
       : [];
   const abouts: RecommendationLite[] =
@@ -125,8 +125,8 @@ function fallbackDataFor(slug: string | undefined) {
           {
             id: "d1",
             body:
-              "輪郭がはっきりしているのに、強く押しつけない。香りの立ち上がりから後半の余韻まで、空気の密度が一定で気持ちいい。派手さより、丁寧さで惹きつけるタイプ。",
-            fromPerson: { slug: "ben", displayName: "Ben" },
+              "フレーバーごとの解像度が高いのは言うまでもなく、伝導熱や放射熱など温度帯も完璧に計算され、吸い手との阿吽の呼吸でのその進行管理はもはや芸術の域に達している。",
+            fromPerson: { slug: "tachiuo", displayName: "Tachiuo" },
           },
         ]
       : s === "tachiuo"
@@ -330,23 +330,8 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
                     </div>
                     <div className="mt-4 border-t border-white/10" />
 
-                    {g.voices.length > 0 ? (
-                      <div className="mt-8">
-                        <div className="text-xs text-zinc-500">Comment</div>
-                        <div className="mt-4 space-y-8">
-                          {g.voices.slice(0, 2).map((rec) => (
-                            <div key={`${g.key}-comment-${rec.id}`}>
-                              <p className="whitespace-pre-wrap leading-8 text-zinc-200">
-                                {rec.body}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-
                     {flavorsTop.length > 0 ? (
-                      <div className="mt-10">
+                      <div className="mt-8">
                         <div className="text-xs text-zinc-500">Recommended Flavors</div>
                         <div className="mt-4 space-y-5">
                           {flavorsTop.map((f, idx) => (
@@ -357,6 +342,21 @@ export default async function PeopleDetail({ params }: { params: PeoplePageParam
                                   {f.comment}
                                 </div>
                               ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {g.voices.length > 0 ? (
+                      <div className="mt-10">
+                        <div className="text-xs text-zinc-500">Comment</div>
+                        <div className="mt-4 space-y-8">
+                          {g.voices.slice(0, 2).map((rec) => (
+                            <div key={`${g.key}-comment-${rec.id}`}>
+                              <p className="whitespace-pre-wrap leading-7 text-zinc-300/90">
+                                {rec.body}
+                              </p>
                             </div>
                           ))}
                         </div>
